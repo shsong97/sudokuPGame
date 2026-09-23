@@ -16,6 +16,7 @@ data class SavedGameEntity(
     val notesMode: Boolean,
     val updatedAt: Long,
     @ColumnInfo(defaultValue = "0") val hintsUsed: Int = 0,
+    @ColumnInfo(defaultValue = "NUMBER") val mode: String = "NUMBER",
 )
 
 @Entity(tableName = "puzzle_record")

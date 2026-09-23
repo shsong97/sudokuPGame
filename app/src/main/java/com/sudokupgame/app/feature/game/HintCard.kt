@@ -22,25 +22,31 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.sudokupgame.app.R
+import com.sudokupgame.app.data.GameMode
 
 /** 1단계 힌트 설명. [onReveal]은 2단계(정답 넣기 / 틀린 숫자 지우기). */
 @Composable
 fun HintCard(
     hint: Hint,
+    mode: GameMode,
     onReveal: () -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val animal = mode == GameMode.ANIMAL
     val (title, body, action) = when (hint) {
         is Hint.WrongValue -> Triple(
-            stringResource(R.string.hint_wrong_title),
-            stringResource(R.string.hint_wrong_body),
+            stringResource(if (animal) R.string.hint_wrong_title_animal else R.string.hint_wrong_title),
+            stringResource(if (animal) R.string.hint_wrong_body_animal else R.string.hint_wrong_body),
             stringResource(R.string.hint_wrong_action),
         )
 
         is Hint.Placement -> Triple(
             stringResource(hint.technique.nameRes),
-            stringResource(R.string.hint_placement_body, stringResource(hint.technique.descriptionRes)),
+            stringResource(
+                if (animal) R.string.hint_placement_body_animal else R.string.hint_placement_body,
+                stringResource(hint.technique.descriptionRes(mode)),
+            ),
             stringResource(R.string.hint_reveal),
         )
     }

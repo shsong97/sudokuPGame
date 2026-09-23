@@ -2,9 +2,11 @@ package com.sudokupgame.app.feature.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.sudokupgame.app.data.GameMode
 import com.sudokupgame.app.data.GameRepository
 import com.sudokupgame.app.data.PuzzleRepository
 import com.sudokupgame.app.data.SavedGame
+import com.sudokupgame.app.data.SettingsRepository
 import com.sudokupgame.app.data.nextPuzzleToPlay
 import com.sudokupgame.engine.Difficulty
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -13,6 +15,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 sealed interface HomeUiState {
@@ -25,7 +28,17 @@ sealed interface HomeUiState {
 class HomeViewModel @Inject constructor(
     private val puzzleRepository: PuzzleRepository,
     private val gameRepository: GameRepository,
+    private val settingsRepository: SettingsRepository,
 ) : ViewModel() {
+
+    /** 새 게임에 쓸 모드 (마지막으로 고른 것). */
+    val mode: StateFlow<GameMode> = settingsRepository.settings
+        .map { it.lastGameMode }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), GameMode.NUMBER)
+
+    fun setMode(mode: GameMode) {
+        viewModelScope.launch { settingsRepository.update { it.copy(lastGameMode = mode) } }
+    }
 
     /** 불러오기 전에는 Loading. 버튼 배치가 바뀌며 잘못 눌리는 일을 막기 위해 구분한다. */
     val uiState: StateFlow<HomeUiState> = gameRepository.savedGame

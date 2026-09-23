@@ -18,7 +18,7 @@ fun SudokuNavHost() {
     NavHost(navController = navController, startDestination = HomeRoute) {
         composable<HomeRoute> {
             HomeScreen(
-                onStartGame = { id -> navController.navigate(GameRoute(id)) },
+                onStartGame = { id, mode -> navController.navigate(GameRoute(id, mode)) },
                 onPuzzles = { navController.navigate(PuzzlesRoute) },
                 onStats = { navController.navigate(StatsRoute) },
                 onSettings = { navController.navigate(SettingsRoute) },
@@ -27,14 +27,14 @@ fun SudokuNavHost() {
         composable<PuzzlesRoute> {
             PuzzlesScreen(
                 onBack = onBack,
-                onStartGame = { id -> navController.navigate(GameRoute(id)) },
+                onStartGame = { id, mode -> navController.navigate(GameRoute(id, mode)) },
             )
         }
         composable<GameRoute> {
             GameScreen(
                 onBack = onBack,
-                onNextPuzzle = { id ->
-                    navController.navigate(GameRoute(id)) {
+                onNextPuzzle = { id, mode ->
+                    navController.navigate(GameRoute(id, mode)) {
                         popUpTo<GameRoute> { inclusive = true }
                     }
                 },

@@ -46,6 +46,25 @@ class MigrationTest {
         }
     }
 
+    @Test
+    fun migrate2To3_defaultsModeToNumber() {
+        helper.createDatabase(DB_NAME, 2).use { db ->
+            db.execSQL(
+                "INSERT INTO saved_game (id, puzzleId, difficulty, cells, mistakes, elapsedSeconds, notesMode, updatedAt, hintsUsed) " +
+                    "VALUES (0, 'M002', 'MEDIUM', '${"00000".repeat(81)}', 0, 10, 1, 0, 2)",
+            )
+        }
+
+        helper.runMigrationsAndValidate(DB_NAME, 3, true).use { db ->
+            db.query("SELECT puzzleId, hintsUsed, mode FROM saved_game").use { c ->
+                c.moveToFirst()
+                assertEquals("M002", c.getString(0))
+                assertEquals(2, c.getInt(1))
+                assertEquals("NUMBER", c.getString(2))
+            }
+        }
+    }
+
     private companion object {
         const val DB_NAME = "migration-test"
     }

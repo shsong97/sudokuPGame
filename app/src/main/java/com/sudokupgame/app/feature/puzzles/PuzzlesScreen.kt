@@ -42,6 +42,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sudokupgame.app.R
+import com.sudokupgame.app.data.GameMode
+import com.sudokupgame.app.ui.GameModeSelector
 import com.sudokupgame.app.ui.OverwriteGameDialog
 import com.sudokupgame.app.ui.formatTime
 import com.sudokupgame.app.ui.label
@@ -51,7 +53,7 @@ import com.sudokupgame.engine.Difficulty
 @Composable
 fun PuzzlesScreen(
     onBack: () -> Unit,
-    onStartGame: (String) -> Unit,
+    onStartGame: (String, GameMode) -> Unit,
     viewModel: PuzzlesViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -60,7 +62,7 @@ fun PuzzlesScreen(
 
     val onPuzzleClick: (String) -> Unit = { id ->
         val saved = state.savedPuzzleId
-        if (saved != null && saved != id) pendingPuzzleId = id else onStartGame(id)
+        if (saved != null && saved != id) pendingPuzzleId = id else onStartGame(id, state.mode)
     }
 
     Scaffold(
@@ -76,6 +78,11 @@ fun PuzzlesScreen(
         },
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
+            GameModeSelector(
+                selected = state.mode,
+                onSelect = viewModel::setMode,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+            )
             PrimaryScrollableTabRow(selectedTabIndex = selectedTab, edgePadding = 8.dp) {
                 Difficulty.entries.forEachIndexed { index, difficulty ->
                     val items = state.items[difficulty].orEmpty()
@@ -113,7 +120,7 @@ fun PuzzlesScreen(
             savedPuzzleId = saved,
             onConfirm = {
                 pendingPuzzleId = null
-                onStartGame(pending)
+                onStartGame(pending, state.mode)
             },
             onDismiss = { pendingPuzzleId = null },
         )

@@ -1,5 +1,6 @@
 package com.sudokupgame.app.feature.game
 
+import com.sudokupgame.app.data.GameMode
 import com.sudokupgame.app.data.Puzzle
 import com.sudokupgame.engine.Board
 import com.sudokupgame.engine.Difficulty
@@ -161,6 +162,12 @@ class GameStateTest {
         }
         assertEquals(GameStatus.WON, state.status)
         assertEquals(0, state.mistakes)
+    }
+
+    @Test
+    fun `다시 시작해도 표시 모드는 유지된다`() {
+        val animal = GameState.new(TestPuzzles.easy, GameMode.ANIMAL)
+        assertEquals(GameMode.ANIMAL, animal.select(empty).input(wrong).restart().mode)
     }
 
     @Test

@@ -12,6 +12,7 @@ data class SavedGame(
     val elapsedSeconds: Long,
     val notesMode: Boolean,
     val hintsUsed: Int = 0,
+    val mode: GameMode = GameMode.NUMBER,
 )
 
 /** 퍼즐별 누적 기록. 끝낸 게임(클리어·게임 오버)만 센다. */

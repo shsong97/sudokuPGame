@@ -4,6 +4,7 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,6 +33,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.sudokupgame.app.R
+import com.sudokupgame.app.data.GameMode
+import com.sudokupgame.app.ui.spokenName
+import com.sudokupgame.app.ui.symbol
 import com.sudokupgame.engine.Grid
 
 @Composable
@@ -63,6 +68,8 @@ fun SudokuBoard(
                             cell.isError -> colors.error.copy(alpha = 0.14f)
                             selectedValue != null && cell.value == selectedValue -> colors.primary.copy(alpha = 0.16f)
                             selected != null && isRelated(index, selected) -> colors.surfaceVariant
+                            // 동물 모드는 글자색으로 구분할 수 없어서, 직접 넣은 칸을 옅은 배경으로 구분한다.
+                            game.mode == GameMode.ANIMAL && !cell.isGiven && !cell.isEmpty -> colors.primary.copy(alpha = 0.08f)
                             else -> Color.Transparent
                         }
                         SudokuCell(
@@ -73,6 +80,7 @@ fun SudokuBoard(
                             highlightNote = selectedValue,
                             isSelected = index == selected,
                             background = background,
+                            mode = game.mode,
                             modifier = Modifier
                                 .weight(1f)
                                 .fillMaxHeight()
@@ -105,6 +113,7 @@ private fun SudokuCell(
     highlightNote: Int?,
     isSelected: Boolean,
     background: Color,
+    mode: GameMode,
     modifier: Modifier,
 ) {
     val colors = MaterialTheme.colorScheme
@@ -112,8 +121,8 @@ private fun SudokuCell(
     val density = LocalDensity.current
     val stateText = when {
         cell.isEmpty -> stringResource(R.string.game_cell_empty)
-        cell.isError -> "${cell.value} ${stringResource(R.string.game_cell_error)}"
-        else -> cell.value.toString()
+        cell.isError -> "${mode.spokenName(cell.value)} ${stringResource(R.string.game_cell_error)}"
+        else -> mode.spokenName(cell.value)
     }
     val description = stringResource(R.string.game_cell_description, row + 1, col + 1, stateText)
 
@@ -125,9 +134,13 @@ private fun SudokuCell(
         contentAlignment = Alignment.Center,
     ) {
         if (!cell.isEmpty) {
+            // 이모지는 글자색이 적용되지 않으므로, 동물 모드의 오답은 테두리로도 표시한다.
+            if (cell.isError && mode == GameMode.ANIMAL) {
+                Box(Modifier.matchParentSize().padding(2.dp).border(2.dp, colors.error))
+            }
             Text(
-                text = cell.value.toString(),
-                fontSize = with(density) { (cellSize * 0.6f).toSp() },
+                text = mode.symbol(cell.value),
+                fontSize = with(density) { (cellSize * if (mode == GameMode.ANIMAL) 0.55f else 0.6f).toSp() },
                 fontWeight = if (cell.isGiven) FontWeight.SemiBold else FontWeight.Normal,
                 color = when {
                     cell.isError -> colors.error
@@ -145,7 +158,7 @@ private fun SudokuCell(
                             Box(Modifier.weight(1f).fillMaxHeight(), contentAlignment = Alignment.Center) {
                                 if (digit in cell.notes) {
                                     Text(
-                                        text = digit.toString(),
+                                        text = mode.symbol(digit),
                                         fontSize = noteSize,
                                         lineHeight = noteSize,
                                         fontWeight = if (digit == highlightNote) FontWeight.Bold else FontWeight.Normal,

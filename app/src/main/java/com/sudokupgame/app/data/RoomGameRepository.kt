@@ -33,6 +33,7 @@ class RoomGameRepository @Inject constructor(
                 notesMode = game.notesMode,
                 updatedAt = System.currentTimeMillis(),
                 hintsUsed = game.hintsUsed,
+                mode = game.mode.name,
             ),
         )
     }
@@ -75,6 +76,7 @@ class RoomGameRepository @Inject constructor(
         elapsedSeconds = elapsedSeconds,
         notesMode = notesMode,
         hintsUsed = hintsUsed,
+        mode = runCatching { GameMode.valueOf(mode) }.getOrDefault(GameMode.NUMBER),
     )
 
     private fun PuzzleRecordEntity.toModel() = PuzzleRecord(

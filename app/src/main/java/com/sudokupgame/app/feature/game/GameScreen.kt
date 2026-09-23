@@ -46,6 +46,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sudokupgame.app.R
+import com.sudokupgame.app.data.GameMode
 import com.sudokupgame.app.data.Settings
 import com.sudokupgame.app.ui.PlaceholderScreen
 import com.sudokupgame.app.ui.formatTime
@@ -54,7 +55,7 @@ import com.sudokupgame.app.ui.label
 @Composable
 fun GameScreen(
     onBack: () -> Unit,
-    onNextPuzzle: (String) -> Unit,
+    onNextPuzzle: (String, GameMode) -> Unit,
     onPuzzleList: () -> Unit,
     onHome: () -> Unit,
     viewModel: GameViewModel = hiltViewModel(),
@@ -136,7 +137,10 @@ private fun GameContent(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.game_title_format, game.difficulty.label(), game.puzzleId)) },
+                title = {
+                    val format = if (game.mode == GameMode.ANIMAL) R.string.game_title_animal_format else R.string.game_title_format
+                    Text(stringResource(format, game.difficulty.label(), game.puzzleId))
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(painterResource(R.drawable.ic_arrow_back), stringResource(R.string.navigate_back))
@@ -261,7 +265,7 @@ private fun Controls(
         label = "hint",
     ) { hint ->
         if (hint != null) {
-            HintCard(hint = hint, onReveal = onRevealHint, onDismiss = onDismissHint)
+            HintCard(hint = hint, mode = game.mode, onReveal = onRevealHint, onDismiss = onDismissHint)
         } else {
             GameToolbar(
                 canUndo = game.canUndo,
@@ -295,7 +299,7 @@ private fun PausedOverlay(onResume: () -> Unit, modifier: Modifier) {
 private fun GameResultDialog(
     game: GameState,
     nextPuzzleId: String?,
-    onNextPuzzle: (String) -> Unit,
+    onNextPuzzle: (String, GameMode) -> Unit,
     onHome: () -> Unit,
     onRestart: () -> Unit,
     onPuzzleList: () -> Unit,
@@ -309,7 +313,7 @@ private fun GameResultDialog(
             },
             confirmButton = {
                 if (nextPuzzleId != null) {
-                    Button(onClick = { onNextPuzzle(nextPuzzleId) }) { Text(stringResource(R.string.game_next_puzzle)) }
+                    Button(onClick = { onNextPuzzle(nextPuzzleId, game.mode) }) { Text(stringResource(R.string.game_next_puzzle)) }
                 }
             },
             dismissButton = {

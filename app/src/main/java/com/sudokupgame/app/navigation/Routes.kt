@@ -1,5 +1,6 @@
 package com.sudokupgame.app.navigation
 
+import com.sudokupgame.app.data.GameMode
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -9,7 +10,7 @@ data object HomeRoute
 data object PuzzlesRoute
 
 @Serializable
-data class GameRoute(val puzzleId: String)
+data class GameRoute(val puzzleId: String, val mode: GameMode = GameMode.NUMBER)
 
 @Serializable
 data object StatsRoute

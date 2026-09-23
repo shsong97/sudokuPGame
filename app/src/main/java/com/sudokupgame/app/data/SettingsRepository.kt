@@ -38,6 +38,7 @@ class DataStoreSettingsRepository @Inject constructor(
             prefs[SHOW_TIMER] = new.showTimer
             prefs[VIBRATION] = new.vibration
             prefs[THEME_MODE] = new.themeMode.name
+            prefs[LAST_GAME_MODE] = new.lastGameMode.name
         }
     }
 
@@ -49,6 +50,8 @@ class DataStoreSettingsRepository @Inject constructor(
             showTimer = this[SHOW_TIMER] ?: defaults.showTimer,
             vibration = this[VIBRATION] ?: defaults.vibration,
             themeMode = this[THEME_MODE]?.let { runCatching { ThemeMode.valueOf(it) }.getOrNull() } ?: defaults.themeMode,
+            lastGameMode = this[LAST_GAME_MODE]?.let { runCatching { GameMode.valueOf(it) }.getOrNull() }
+                ?: defaults.lastGameMode,
         )
     }
 
@@ -58,5 +61,6 @@ class DataStoreSettingsRepository @Inject constructor(
         val SHOW_TIMER = booleanPreferencesKey("show_timer")
         val VIBRATION = booleanPreferencesKey("vibration")
         val THEME_MODE = stringPreferencesKey("theme_mode")
+        val LAST_GAME_MODE = stringPreferencesKey("last_game_mode")
     }
 }

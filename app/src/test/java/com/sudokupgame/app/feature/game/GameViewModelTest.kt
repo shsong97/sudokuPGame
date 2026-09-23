@@ -9,6 +9,7 @@ import app.cash.turbine.test
 import com.sudokupgame.app.data.FakeGameRepository
 import com.sudokupgame.app.data.FakePuzzleRepository
 import com.sudokupgame.app.data.FakeSettingsRepository
+import com.sudokupgame.app.data.GameMode
 import com.sudokupgame.app.data.Settings
 import com.sudokupgame.engine.Grid
 import kotlinx.coroutines.Dispatchers
@@ -59,11 +60,11 @@ class GameViewModelTest {
     }
 
     /** 앱 스코프 대신 테스트 스코프의 backgroundScope를 넘긴다. */
-    private fun TestScope.viewModel(id: String): GameViewModel {
+    private fun TestScope.viewModel(id: String, mode: GameMode = GameMode.NUMBER): GameViewModel {
         val factory = viewModelFactory {
             initializer {
                 GameViewModel(
-                    SavedStateHandle(mapOf(GameViewModel.PUZZLE_ID_KEY to id)),
+                    SavedStateHandle(mapOf(GameViewModel.PUZZLE_ID_KEY to id, GameViewModel.MODE_KEY to mode)),
                     puzzles,
                     games,
                     settings,
@@ -204,6 +205,33 @@ class GameViewModelTest {
         }
         advanceTimeBy(600)
         assertEquals(2, games.recordList.value.single().hintsUsed)
+    }
+
+    @Test
+    fun `동물 모드로 시작하면 저장된 게임에도 모드가 남는다`() = runVmTest {
+        val vm = viewModel("E001", GameMode.ANIMAL)
+        runCurrent()
+        assertEquals(GameMode.ANIMAL, vm.game().mode)
+        advanceTimeBy(600)
+        assertEquals(GameMode.ANIMAL, games.saved.value?.mode)
+    }
+
+    @Test
+    fun `이어하기는 요청한 모드로 표시하고 진행 상황은 그대로다`() = runVmTest {
+        val first = viewModel("E001", GameMode.NUMBER)
+        runCurrent()
+        first.onCellClick(empty)
+        first.onDigit(solution[empty])
+        advanceTimeBy(600)
+        store.clear()
+        runCurrent()
+
+        val resumed = viewModel("E001", GameMode.ANIMAL)
+        runCurrent()
+        assertEquals(GameMode.ANIMAL, resumed.game().mode)
+        assertEquals(solution[empty], resumed.game().cells[empty].value)
+        advanceTimeBy(600)
+        assertEquals(GameMode.ANIMAL, games.saved.value?.mode)
     }
 
     @Test

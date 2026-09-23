@@ -1,5 +1,6 @@
 package com.sudokupgame.app.feature.game
 
+import com.sudokupgame.app.data.GameMode
 import com.sudokupgame.app.data.Puzzle
 import com.sudokupgame.app.data.SavedGame
 import com.sudokupgame.engine.Board
@@ -56,6 +57,8 @@ data class GameState(
     val history: List<List<CellState>> = emptyList(),
     val hintsUsed: Int = 0,
     val hint: Hint? = null,
+    /** 표시 방식. 규칙에는 영향이 없다. */
+    val mode: GameMode = GameMode.NUMBER,
 ) {
     val canUndo: Boolean get() = status == GameStatus.PLAYING && history.isNotEmpty()
 
@@ -133,6 +136,7 @@ data class GameState(
         difficulty = difficulty,
         cells = cells.map { if (it.isGiven) it else CellState() },
         solution = solution,
+        mode = mode,
     )
 
     /** 1단계 힌트: 틀린 칸이 있으면 그 칸을, 없으면 다음에 확정할 수 있는 칸과 기법을 보여준다. */
@@ -176,7 +180,7 @@ data class GameState(
     companion object {
         private const val MAX_HISTORY = 200
 
-        fun new(puzzle: Puzzle): GameState = GameState(
+        fun new(puzzle: Puzzle, mode: GameMode = GameMode.NUMBER): GameState = GameState(
             puzzleId = puzzle.id,
             difficulty = puzzle.difficulty,
             cells = List(Grid.CELLS) { i ->
@@ -184,10 +188,11 @@ data class GameState(
                 CellState(value = value, isGiven = value != 0)
             },
             solution = puzzle.solution,
+            mode = mode,
         )
 
-        /** 저장된 게임을 이어서. 실행 취소 기록은 비어 있다. */
-        fun restore(puzzle: Puzzle, saved: SavedGame): GameState = GameState(
+        /** 저장된 게임을 이어서. 실행 취소 기록은 비어 있다. [mode]로 표시 방식을 바꿔 이어갈 수 있다. */
+        fun restore(puzzle: Puzzle, saved: SavedGame, mode: GameMode = saved.mode): GameState = GameState(
             puzzleId = puzzle.id,
             difficulty = puzzle.difficulty,
             cells = saved.cells,
@@ -196,6 +201,7 @@ data class GameState(
             elapsedSeconds = saved.elapsedSeconds,
             notesMode = saved.notesMode,
             hintsUsed = saved.hintsUsed,
+            mode = mode,
         )
     }
 
@@ -207,6 +213,7 @@ data class GameState(
         elapsedSeconds = elapsedSeconds,
         notesMode = notesMode,
         hintsUsed = hintsUsed,
+        mode = mode,
     )
 }
 

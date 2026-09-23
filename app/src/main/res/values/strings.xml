@@ -104,6 +104,38 @@
     <string name="game_restart">다시 시작</string>
     <string name="game_other_puzzle">다른 퍼즐</string>
 
+    <string name="mode_number">숫자</string>
+    <string name="mode_animal">동물</string>
+    <string name="mode_number_sample">123</string>
+    <string name="mode_animal_sample">🐶🐱🦁</string>
+    <string name="game_title_animal_format">🐾 %1$s · %2$s</string>
+
+    <string name="animal_1">개</string>
+    <string name="animal_2">고양이</string>
+    <string name="animal_3">사자</string>
+    <string name="animal_4">원숭이</string>
+    <string name="animal_5">토끼</string>
+    <string name="animal_6">곰</string>
+    <string name="animal_7">판다</string>
+    <string name="animal_8">코끼리</string>
+    <string name="animal_9">펭귄</string>
+    <string name="game_animal_description">%1$s, %2$d마리 남음</string>
+
+    <string name="hint_wrong_title_animal">틀린 동물이 있어요</string>
+    <string name="hint_wrong_body_animal">표시된 칸의 동물이 정답과 달라요. 먼저 이 칸을 고쳐 보세요.</string>
+    <string name="hint_placement_body_animal">표시된 칸에 들어갈 동물을 찾을 수 있어요. %1$s</string>
+    <string name="technique_naked_single_desc_animal">이 칸에는 같은 행·열·박스에 없는 동물이 하나만 남아 있어요.</string>
+    <string name="technique_hidden_single_desc_animal">강조된 줄(또는 박스)에서 어떤 동물이 들어갈 수 있는 칸이 이 칸 하나뿐이에요.</string>
+    <string name="technique_naked_pair_desc_animal">강조된 두 칸에는 같은 두 동물만 들어갈 수 있어서, 같은 줄의 다른 칸에서는 그 두 동물을 지울 수 있어요.</string>
+    <string name="technique_hidden_pair_desc_animal">두 동물이 줄 안에서 강조된 두 칸에만 들어갈 수 있어서, 그 두 칸의 다른 후보는 지울 수 있어요.</string>
+    <string name="technique_pointing_desc_animal">박스 안에서 어떤 동물이 강조된 칸들(한 줄)에만 올 수 있어서, 그 줄의 박스 밖 칸에서는 그 동물을 지울 수 있어요.</string>
+    <string name="technique_naked_triple_desc_animal">강조된 세 칸에는 합쳐서 세 동물만 들어갈 수 있어서, 같은 줄의 다른 칸에서는 그 동물들을 지울 수 있어요.</string>
+    <string name="technique_hidden_triple_desc_animal">세 동물이 줄 안에서 강조된 세 칸에만 들어갈 수 있어서, 그 칸들의 다른 후보는 지울 수 있어요.</string>
+    <string name="technique_box_line_reduction_desc_animal">한 줄에서 어떤 동물이 강조된 칸들(한 박스 안)에만 올 수 있어서, 그 박스의 다른 칸에서는 그 동물을 지울 수 있어요.</string>
+    <string name="technique_x_wing_desc_animal">어떤 동물이 두 줄에서 같은 두 칸 위치에만 올 수 있어서(강조된 네 칸), 그 두 열(행)의 다른 칸에서는 그 동물을 지울 수 있어요.</string>
+    <string name="technique_xy_wing_desc_animal">강조된 세 칸(가운데 칸과 두 날개)의 후보 조합 때문에, 두 날개를 모두 보는 칸에서는 공통 동물을 지울 수 있어요.</string>
+    <string name="technique_swordfish_desc_animal">어떤 동물이 세 줄에서 같은 세 칸 위치 안에만 올 수 있어서, 그 세 열(행)의 다른 칸에서는 그 동물을 지울 수 있어요.</string>
+
     <string name="difficulty_easy">쉬움</string>
     <string name="difficulty_medium">보통</string>
     <string name="difficulty_hard">어려움</string>

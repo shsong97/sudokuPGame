@@ -36,7 +36,9 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sudokupgame.app.R
+import com.sudokupgame.app.data.GameMode
 import com.sudokupgame.app.data.SavedGame
+import com.sudokupgame.app.ui.GameModeSelector
 import com.sudokupgame.app.ui.OverwriteGameDialog
 import com.sudokupgame.app.ui.formatTime
 import com.sudokupgame.app.ui.label
@@ -46,7 +48,7 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun HomeScreen(
-    onStartGame: (String) -> Unit,
+    onStartGame: (String, GameMode) -> Unit,
     onPuzzles: () -> Unit,
     onStats: () -> Unit,
     onSettings: () -> Unit,
@@ -55,18 +57,21 @@ fun HomeScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val loaded = uiState as? HomeUiState.Loaded
     val savedGame = loaded?.savedGame
+    val mode by viewModel.mode.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     var pendingPuzzleId by rememberSaveable { mutableStateOf<String?>(null) }
 
     HomeContent(
         loading = loaded == null,
         savedGame = savedGame,
-        onContinue = { savedGame?.let { onStartGame(it.puzzleId) } },
+        mode = mode,
+        onModeChange = viewModel::setMode,
+        onContinue = { savedGame?.let { onStartGame(it.puzzleId, it.mode) } },
         onNewGame = { difficulty ->
             scope.launch {
                 val id = viewModel.puzzleForNewGame(difficulty) ?: return@launch
                 val saved = savedGame
-                if (saved != null && saved.puzzleId != id) pendingPuzzleId = id else onStartGame(id)
+                if (saved != null && saved.puzzleId != id) pendingPuzzleId = id else onStartGame(id, mode)
             }
         },
         onPuzzles = onPuzzles,
@@ -81,7 +86,7 @@ fun HomeScreen(
             savedPuzzleId = saved.puzzleId,
             onConfirm = {
                 pendingPuzzleId = null
-                onStartGame(pending)
+                onStartGame(pending, mode)
             },
             onDismiss = { pendingPuzzleId = null },
         )
@@ -92,6 +97,8 @@ fun HomeScreen(
 private fun HomeContent(
     loading: Boolean,
     savedGame: SavedGame?,
+    mode: GameMode,
+    onModeChange: (GameMode) -> Unit,
     onContinue: () -> Unit,
     onNewGame: (Difficulty) -> Unit,
     onPuzzles: () -> Unit,
@@ -122,7 +129,7 @@ private fun HomeContent(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(stringResource(R.string.home_continue))
                         Text(
-                            text = stringResource(
+                            text = (if (savedGame.mode == GameMode.ANIMAL) "🐾 " else "") + stringResource(
                                 R.string.home_continue_detail,
                                 savedGame.difficulty.label(),
                                 savedGame.puzzleId,
@@ -165,6 +172,8 @@ private fun HomeContent(
 
     if (choosingDifficulty) {
         DifficultySheet(
+            mode = mode,
+            onModeChange = onModeChange,
             onSelect = { difficulty ->
                 choosingDifficulty = false
                 onNewGame(difficulty)
@@ -177,10 +186,17 @@ private fun HomeContent(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun DifficultySheet(
+    mode: GameMode,
+    onModeChange: (GameMode) -> Unit,
     onSelect: (Difficulty) -> Unit,
     onDismiss: () -> Unit,
 ) {
     ModalBottomSheet(onDismissRequest = onDismiss) {
+        GameModeSelector(
+            selected = mode,
+            onSelect = onModeChange,
+            modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
+        )
         Text(
             text = stringResource(R.string.new_game_choose_difficulty),
             style = MaterialTheme.typography.titleMedium,
@@ -204,6 +220,8 @@ private fun HomeContentPreview() {
         HomeContent(
             loading = false,
             savedGame = null,
+            mode = GameMode.NUMBER,
+            onModeChange = {},
             onContinue = {},
             onNewGame = {},
             onPuzzles = {},

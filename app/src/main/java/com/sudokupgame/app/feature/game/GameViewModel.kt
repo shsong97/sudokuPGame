@@ -3,6 +3,7 @@ package com.sudokupgame.app.feature.game
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.sudokupgame.app.data.GameMode
 import com.sudokupgame.app.data.GameRepository
 import com.sudokupgame.app.data.PuzzleRepository
 import com.sudokupgame.app.data.Settings
@@ -53,6 +54,7 @@ class GameViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val puzzleId: String = checkNotNull(savedStateHandle[PUZZLE_ID_KEY])
+    private val mode: GameMode = savedStateHandle[MODE_KEY] ?: GameMode.NUMBER
 
     private val _uiState = MutableStateFlow<GameUiState>(GameUiState.Loading)
     val uiState: StateFlow<GameUiState> = _uiState.asStateFlow()
@@ -73,7 +75,7 @@ class GameViewModel @Inject constructor(
                 return@launch
             }
             val saved = gameRepository.getSavedGame()?.takeIf { it.puzzleId == puzzleId }
-            val game = if (saved != null) GameState.restore(puzzle, saved) else GameState.new(puzzle)
+            val game = if (saved != null) GameState.restore(puzzle, saved, mode) else GameState.new(puzzle, mode)
             _uiState.value = GameUiState.Ready(game, puzzleRepository.nextPuzzleId(puzzleId))
             launch { autoSave() }
             runTimer()
@@ -97,7 +99,7 @@ class GameViewModel @Inject constructor(
             .map { it.game }
             .distinctUntilChanged { old, new ->
                 old.cells == new.cells && old.mistakes == new.mistakes && old.status == new.status &&
-                    old.hintsUsed == new.hintsUsed &&
+                    old.hintsUsed == new.hintsUsed && old.mode == new.mode &&
                     old.elapsedSeconds / TIME_SAVE_INTERVAL_SECONDS == new.elapsedSeconds / TIME_SAVE_INTERVAL_SECONDS
             }
             .debounce(SAVE_DEBOUNCE_MILLIS)
@@ -181,6 +183,7 @@ class GameViewModel @Inject constructor(
     companion object {
         /** GameRoute.puzzleId 와 같은 이름. 타입 안전 라우트는 속성 이름을 키로 쓴다. */
         const val PUZZLE_ID_KEY = "puzzleId"
+        const val MODE_KEY = "mode"
         private const val SAVE_DEBOUNCE_MILLIS = 500L
         private const val TIME_SAVE_INTERVAL_SECONDS = 10
     }

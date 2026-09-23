@@ -17,6 +17,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -26,6 +27,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.sudokupgame.app.R
+import com.sudokupgame.app.data.GameMode
+import com.sudokupgame.app.ui.spokenName
+import com.sudokupgame.app.ui.symbol
 
 @Composable
 fun GameToolbar(
@@ -99,7 +103,10 @@ fun NumberPad(
 @Composable
 private fun DigitButton(game: GameState, digit: Int, onDigit: (Int) -> Unit, modifier: Modifier) {
     val remaining = game.remainingCount(digit)
-    val description = stringResource(R.string.game_digit_description, digit, remaining)
+    val description = when (game.mode) {
+        GameMode.NUMBER -> stringResource(R.string.game_digit_description, digit, remaining)
+        GameMode.ANIMAL -> stringResource(R.string.game_animal_description, game.mode.spokenName(digit), remaining)
+    }
     // 숫자는 이미 크므로 시스템 글꼴 크기에 따라 더 커지지 않게 dp 기준으로 고정한다.
     val digitSize = with(LocalDensity.current) { 28.dp.toSp() }
     TextButton(
@@ -116,9 +123,11 @@ private fun DigitButton(game: GameState, digit: Int, onDigit: (Int) -> Unit, mod
             modifier = Modifier.clearAndSetSemantics {},
         ) {
             Text(
-                text = digit.toString(),
+                text = game.mode.symbol(digit),
                 fontSize = digitSize,
                 fontWeight = FontWeight.Medium,
+                // 이모지는 색이 바뀌지 않으므로 다 쓴 동물은 흐리게.
+                modifier = Modifier.alpha(if (remaining == 0) 0.3f else 1f),
                 color = when {
                     remaining == 0 -> MaterialTheme.colorScheme.outlineVariant
                     game.notesMode -> MaterialTheme.colorScheme.onSurfaceVariant
