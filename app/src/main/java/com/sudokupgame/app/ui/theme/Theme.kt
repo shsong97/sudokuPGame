@@ -17,6 +17,11 @@ private val LightColors = lightColorScheme(
     background = LightBackground,
     surface = LightBackground,
     surfaceVariant = LightSurfaceVariant,
+    surfaceContainerLowest = LightContainerLowest,
+    surfaceContainerLow = LightContainerLow,
+    surfaceContainer = LightContainer,
+    surfaceContainerHigh = LightContainerHigh,
+    surfaceContainerHighest = LightContainerHighest,
     error = ErrorRed,
 )
 
@@ -29,6 +34,11 @@ private val DarkColors = darkColorScheme(
     background = DarkBackground,
     surface = DarkBackground,
     surfaceVariant = DarkSurfaceVariant,
+    surfaceContainerLowest = DarkContainerLowest,
+    surfaceContainerLow = DarkContainerLow,
+    surfaceContainer = DarkContainer,
+    surfaceContainerHigh = DarkContainerHigh,
+    surfaceContainerHighest = DarkContainerHighest,
     error = ErrorRedLight,
 )
 

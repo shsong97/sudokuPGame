@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.toRoute
+import com.sudokupgame.app.data.PuzzleIds
 import com.sudokupgame.app.feature.game.GameScreen
 import com.sudokupgame.app.feature.home.HomeScreen
 import com.sudokupgame.app.feature.puzzles.PuzzlesScreen
@@ -19,7 +19,7 @@ fun SudokuNavHost() {
     NavHost(navController = navController, startDestination = HomeRoute) {
         composable<HomeRoute> {
             HomeScreen(
-                onNewGame = { navController.navigate(GameRoute(puzzleId = "E001")) },
+                onNewGame = { difficulty -> navController.navigate(GameRoute(PuzzleIds.first(difficulty))) },
                 onPuzzles = { navController.navigate(PuzzlesRoute) },
                 onStats = { navController.navigate(StatsRoute) },
                 onSettings = { navController.navigate(SettingsRoute) },
@@ -28,8 +28,21 @@ fun SudokuNavHost() {
         composable<PuzzlesRoute> {
             PuzzlesScreen(onBack = onBack)
         }
-        composable<GameRoute> { entry ->
-            GameScreen(puzzleId = entry.toRoute<GameRoute>().puzzleId, onBack = onBack)
+        composable<GameRoute> {
+            GameScreen(
+                onBack = onBack,
+                onNextPuzzle = { id ->
+                    navController.navigate(GameRoute(id)) {
+                        popUpTo<GameRoute> { inclusive = true }
+                    }
+                },
+                onPuzzleList = {
+                    navController.navigate(PuzzlesRoute) {
+                        popUpTo<HomeRoute>()
+                    }
+                },
+                onHome = { navController.popBackStack<HomeRoute>(inclusive = false) },
+            )
         }
         composable<StatsRoute> {
             StatsScreen(onBack = onBack)

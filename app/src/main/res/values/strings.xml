@@ -8,11 +8,36 @@
     <string name="home_settings">설정</string>
 
     <string name="puzzles_title">퍼즐 목록</string>
-    <string name="game_title">퍼즐 %1$s</string>
     <string name="stats_title">통계</string>
     <string name="settings_title">설정</string>
     <string name="navigate_back">뒤로</string>
     <string name="coming_soon">준비 중입니다</string>
+
+    <string name="new_game_choose_difficulty">난이도 선택</string>
+
+    <string name="game_title_format">%1$s · %2$s</string>
+    <string name="game_mistakes">실수 %1$d/%2$d</string>
+    <string name="game_pause">일시정지</string>
+    <string name="game_resume">계속하기</string>
+    <string name="game_paused">일시정지됨</string>
+    <string name="game_undo">실행 취소</string>
+    <string name="game_erase">지우개</string>
+    <string name="game_notes">메모</string>
+    <string name="game_notes_on">메모 켜짐</string>
+    <string name="game_not_found">퍼즐을 찾을 수 없습니다</string>
+    <string name="game_cell_description">%1$d행 %2$d열, %3$s</string>
+    <string name="game_cell_empty">빈칸</string>
+    <string name="game_cell_error">틀림</string>
+    <string name="game_digit_description">숫자 %1$d, %2$d개 남음</string>
+
+    <string name="game_won_title">클리어!</string>
+    <string name="game_won_message">시간 %1$s · 실수 %2$d회</string>
+    <string name="game_next_puzzle">다음 퍼즐</string>
+    <string name="game_home">홈으로</string>
+    <string name="game_lost_title">게임 오버</string>
+    <string name="game_lost_message">실수를 %1$d번 해서 게임이 끝났습니다.</string>
+    <string name="game_restart">다시 시작</string>
+    <string name="game_other_puzzle">다른 퍼즐</string>
 
     <string name="difficulty_easy">쉬움</string>
     <string name="difficulty_medium">보통</string>
