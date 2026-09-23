@@ -27,3 +27,15 @@ application {
 tasks.named<JavaExec>("run") {
     workingDir = rootDir
 }
+
+dependencies {
+    testImplementation(platform(libs.junit.bom))
+    testImplementation(libs.junit.jupiter)
+    testRuntimeOnly(libs.junit.platform.launcher)
+}
+
+tasks.test {
+    useJUnitPlatform()
+    systemProperty("puzzlesJson", rootProject.file("app/src/main/assets/puzzles.json").path)
+    inputs.file(rootProject.file("app/src/main/assets/puzzles.json"))
+}
