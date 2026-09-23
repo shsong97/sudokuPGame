@@ -1,0 +1,21 @@
+<resources>
+    <string name="app_name">sudokuPGame</string>
+
+    <string name="home_continue">이어하기</string>
+    <string name="home_new_game">새 게임</string>
+    <string name="home_puzzles">퍼즐 목록</string>
+    <string name="home_stats">통계</string>
+    <string name="home_settings">설정</string>
+
+    <string name="puzzles_title">퍼즐 목록</string>
+    <string name="game_title">퍼즐 %1$s</string>
+    <string name="stats_title">통계</string>
+    <string name="settings_title">설정</string>
+    <string name="navigate_back">뒤로</string>
+    <string name="coming_soon">준비 중입니다</string>
+
+    <string name="difficulty_easy">쉬움</string>
+    <string name="difficulty_medium">보통</string>
+    <string name="difficulty_hard">어려움</string>
+    <string name="difficulty_expert">전문가</string>
+</resources>
