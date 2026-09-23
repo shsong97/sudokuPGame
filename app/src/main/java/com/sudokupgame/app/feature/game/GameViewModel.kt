@@ -97,6 +97,7 @@ class GameViewModel @Inject constructor(
             .map { it.game }
             .distinctUntilChanged { old, new ->
                 old.cells == new.cells && old.mistakes == new.mistakes && old.status == new.status &&
+                    old.hintsUsed == new.hintsUsed &&
                     old.elapsedSeconds / TIME_SAVE_INTERVAL_SECONDS == new.elapsedSeconds / TIME_SAVE_INTERVAL_SECONDS
             }
             .debounce(SAVE_DEBOUNCE_MILLIS)
@@ -145,6 +146,12 @@ class GameViewModel @Inject constructor(
 
     fun onRestart() = updateGame { it.restart() }
 
+    fun onHint() = updateGame { it.requestHint() }
+
+    fun onRevealHint() = updateGame { it.revealHint(settings.value.autoRemoveNotes) }
+
+    fun onDismissHint() = updateGame { it.dismissHint() }
+
     private fun updateGame(transform: (GameState) -> GameState) {
         val state = _uiState.value as? GameUiState.Ready ?: return
         val old = state.game
@@ -165,6 +172,7 @@ class GameViewModel @Inject constructor(
                 difficulty = game.difficulty,
                 won = game.status == GameStatus.WON,
                 elapsedSeconds = game.elapsedSeconds,
+                hintsUsed = game.hintsUsed,
             )
             gameRepository.clearSavedGame()
         }

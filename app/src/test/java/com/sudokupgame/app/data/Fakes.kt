@@ -28,13 +28,20 @@ class FakeGameRepository : GameRepository {
 
     override val records: Flow<List<PuzzleRecord>> = recordList
 
-    override suspend fun recordResult(puzzleId: String, difficulty: Difficulty, won: Boolean, elapsedSeconds: Long) {
+    override suspend fun recordResult(
+        puzzleId: String,
+        difficulty: Difficulty,
+        won: Boolean,
+        elapsedSeconds: Long,
+        hintsUsed: Int,
+    ) {
         val old = recordList.value.find { it.puzzleId == puzzleId }
             ?: PuzzleRecord(puzzleId, difficulty, 0, 0, null, 0)
         val new = old.copy(
             wins = old.wins + if (won) 1 else 0,
             losses = old.losses + if (won) 0 else 1,
             bestTimeSeconds = if (won) minOf(old.bestTimeSeconds ?: Long.MAX_VALUE, elapsedSeconds) else old.bestTimeSeconds,
+            hintsUsed = old.hintsUsed + hintsUsed,
         )
         recordList.value = recordList.value.filter { it.puzzleId != puzzleId } + new
     }

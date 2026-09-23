@@ -56,4 +56,34 @@ class LogicalSolverTest {
         }
         assertEquals(Technique.entries.toSet(), used, "unused: ${Technique.entries - used}")
     }
+
+    @Test
+    fun `nextPlacement는 정답과 같은 숫자를 알려준다`() {
+        val puzzle = Board.parse(Fixtures.EASY_PUZZLE)
+        val hint = LogicalSolver.nextPlacement(puzzle)!!
+        assertEquals(Board.parse(Fixtures.EASY_SOLUTION)[hint.placement.index], hint.placement.digit)
+        assertEquals(0, puzzle[hint.placement.index])
+    }
+
+    @Test
+    fun `어려운 퍼즐의 힌트는 필요한 기법까지 포함하고 항상 정답이다`() {
+        val generator = PuzzleGenerator(Random(3))
+        for (difficulty in listOf(Difficulty.HARD, Difficulty.EXPERT)) {
+            val generated = generator.generate(difficulty)!!
+            var board = generated.puzzle
+            val seen = mutableSetOf<Technique>()
+            while (!board.isFilled) {
+                val hint = LogicalSolver.nextPlacement(board)!!
+                assertEquals(generated.solution[hint.placement.index], hint.placement.digit)
+                seen += hint.technique
+                board = board.with(hint.placement.index, hint.placement.digit)
+            }
+            assertTrue(seen.any { it.difficulty == difficulty }, "$difficulty: $seen")
+        }
+    }
+
+    @Test
+    fun `기법으로 진행할 수 없으면 null`() {
+        assertNull(LogicalSolver.nextPlacement(Board.parse(Fixtures.HARDEST_PUZZLE)))
+    }
 }

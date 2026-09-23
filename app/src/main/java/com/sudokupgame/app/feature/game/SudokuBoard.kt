@@ -39,6 +39,8 @@ fun SudokuBoard(
     val colors = MaterialTheme.colorScheme
     val selected = game.selected
     val selectedValue = selected?.let { game.cells[it].value }?.takeIf { it != 0 && highlightSameDigit }
+    val hint = game.hint
+    val hintFocus = (hint as? Hint.Placement)?.focusCells.orEmpty()
     val thickLine = colors.onSurface
     val thinLine = colors.outline.copy(alpha = 0.5f)
 
@@ -51,6 +53,8 @@ fun SudokuBoard(
                         val index = Grid.index(row, col)
                         val cell = game.cells[index]
                         val background = when {
+                            hint?.target == index -> colors.secondaryContainer
+                            index in hintFocus -> colors.secondaryContainer.copy(alpha = 0.45f)
                             index == selected -> colors.primary.copy(alpha = 0.28f)
                             cell.isError -> colors.error.copy(alpha = 0.14f)
                             selectedValue != null && cell.value == selectedValue -> colors.primary.copy(alpha = 0.16f)

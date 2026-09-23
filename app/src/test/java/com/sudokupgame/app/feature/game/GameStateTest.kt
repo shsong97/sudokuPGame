@@ -118,6 +118,52 @@ class GameStateTest {
     }
 
     @Test
+    fun `힌트는 정답과 같은 칸과 숫자를 알려주고 한 번만 센다`() {
+        val state = game.requestHint()
+        val hint = state.hint as Hint.Placement
+        assertEquals(solution[hint.target], hint.digit)
+        assertTrue(state.cells[hint.target].isEmpty)
+        assertEquals(hint.target, state.selected)
+        assertEquals(1, state.hintsUsed)
+        assertSame(state, state.requestHint())
+    }
+
+    @Test
+    fun `힌트 정답 보기는 숫자를 넣고 실수로 세지 않는다`() {
+        val shown = game.requestHint()
+        val target = shown.hint!!.target
+        val revealed = shown.revealHint()
+        assertEquals(solution[target], revealed.cells[target].value)
+        assertEquals(0, revealed.mistakes)
+        assertNull(revealed.hint)
+        assertEquals(1, revealed.hintsUsed)
+    }
+
+    @Test
+    fun `틀린 숫자가 있으면 힌트가 먼저 그 칸을 알려주고 지운다`() {
+        val state = game.select(empty).input(wrong).select(0).requestHint()
+        assertEquals(Hint.WrongValue(empty), state.hint)
+        val fixed = state.revealHint()
+        assertTrue(fixed.cells[empty].isEmpty)
+        assertEquals(1, fixed.mistakes)
+    }
+
+    @Test
+    fun `다른 칸을 누르면 힌트가 닫힌다`() {
+        assertNull(game.requestHint().select(0).hint)
+    }
+
+    @Test
+    fun `힌트만으로 끝까지 풀 수 있다`() {
+        var state = game
+        repeat(Grid.CELLS) {
+            if (state.status == GameStatus.PLAYING) state = state.requestHint().revealHint()
+        }
+        assertEquals(GameStatus.WON, state.status)
+        assertEquals(0, state.mistakes)
+    }
+
+    @Test
     fun `다시 시작하면 처음 상태로 돌아간다`() {
         val state = game.select(empty).input(wrong).tick().restart()
         assertEquals(game, state)

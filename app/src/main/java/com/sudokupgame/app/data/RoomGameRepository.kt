@@ -32,6 +32,7 @@ class RoomGameRepository @Inject constructor(
                 elapsedSeconds = game.elapsedSeconds,
                 notesMode = game.notesMode,
                 updatedAt = System.currentTimeMillis(),
+                hintsUsed = game.hintsUsed,
             ),
         )
     }
@@ -41,7 +42,13 @@ class RoomGameRepository @Inject constructor(
     override val records: Flow<List<PuzzleRecord>> =
         recordDao.observeAll().map { list -> list.map { it.toModel() } }
 
-    override suspend fun recordResult(puzzleId: String, difficulty: Difficulty, won: Boolean, elapsedSeconds: Long) {
+    override suspend fun recordResult(
+        puzzleId: String,
+        difficulty: Difficulty,
+        won: Boolean,
+        elapsedSeconds: Long,
+        hintsUsed: Int,
+    ) {
         db.withTransaction {
             val old = recordDao.get(puzzleId)
             val best = old?.bestTimeSeconds
@@ -54,6 +61,7 @@ class RoomGameRepository @Inject constructor(
                     bestTimeSeconds = if (won) minOf(best ?: Long.MAX_VALUE, elapsedSeconds) else best,
                     totalWinTimeSeconds = (old?.totalWinTimeSeconds ?: 0) + if (won) elapsedSeconds else 0,
                     lastPlayedAt = System.currentTimeMillis(),
+                    hintsUsed = (old?.hintsUsed ?: 0) + hintsUsed,
                 ),
             )
         }
@@ -66,6 +74,7 @@ class RoomGameRepository @Inject constructor(
         mistakes = mistakes,
         elapsedSeconds = elapsedSeconds,
         notesMode = notesMode,
+        hintsUsed = hintsUsed,
     )
 
     private fun PuzzleRecordEntity.toModel() = PuzzleRecord(
@@ -75,5 +84,6 @@ class RoomGameRepository @Inject constructor(
         losses = losses,
         bestTimeSeconds = bestTimeSeconds,
         totalWinTimeSeconds = totalWinTimeSeconds,
+        hintsUsed = hintsUsed,
     )
 }

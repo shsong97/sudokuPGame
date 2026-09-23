@@ -85,6 +85,9 @@ fun GameScreen(
                 onErase = viewModel::onErase,
                 onUndo = viewModel::onUndo,
                 onToggleNotes = viewModel::onToggleNotes,
+                onHint = viewModel::onHint,
+                onRevealHint = viewModel::onRevealHint,
+                onDismissHint = viewModel::onDismissHint,
                 onPause = viewModel::onPause,
                 onResume = viewModel::onResume,
             )
@@ -111,6 +114,9 @@ private fun GameContent(
     onErase: () -> Unit,
     onUndo: () -> Unit,
     onToggleNotes: () -> Unit,
+    onHint: () -> Unit,
+    onRevealHint: () -> Unit,
+    onDismissHint: () -> Unit,
     onPause: () -> Unit,
     onResume: () -> Unit,
 ) {
@@ -174,13 +180,19 @@ private fun GameContent(
                 }
 
                 Spacer(Modifier.height(16.dp))
-                GameToolbar(
-                    canUndo = game.canUndo,
-                    notesMode = game.notesMode,
-                    onUndo = onUndo,
-                    onErase = onErase,
-                    onToggleNotes = onToggleNotes,
-                )
+                val hint = game.hint
+                if (hint != null) {
+                    HintCard(hint = hint, onReveal = onRevealHint, onDismiss = onDismissHint)
+                } else {
+                    GameToolbar(
+                        canUndo = game.canUndo,
+                        notesMode = game.notesMode,
+                        onUndo = onUndo,
+                        onErase = onErase,
+                        onToggleNotes = onToggleNotes,
+                        onHint = onHint,
+                    )
+                }
                 Spacer(Modifier.height(8.dp))
                 NumberPad(game = game, onDigit = onDigit)
             }
@@ -215,7 +227,9 @@ private fun GameResultDialog(
         GameStatus.WON -> AlertDialog(
             onDismissRequest = {},
             title = { Text(stringResource(R.string.game_won_title)) },
-            text = { Text(stringResource(R.string.game_won_message, formatTime(game.elapsedSeconds), game.mistakes)) },
+            text = {
+                Text(stringResource(R.string.game_won_message, formatTime(game.elapsedSeconds), game.mistakes, game.hintsUsed))
+            },
             confirmButton = {
                 if (nextPuzzleId != null) {
                     Button(onClick = { onNextPuzzle(nextPuzzleId) }) { Text(stringResource(R.string.game_next_puzzle)) }

@@ -34,6 +34,7 @@ fun GameToolbar(
     onUndo: () -> Unit,
     onErase: () -> Unit,
     onToggleNotes: () -> Unit,
+    onHint: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
@@ -45,6 +46,7 @@ fun GameToolbar(
             onClick = onToggleNotes,
             active = notesMode,
         )
+        ToolButton(R.drawable.ic_hint, stringResource(R.string.game_hint), onHint)
     }
 }
 

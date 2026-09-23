@@ -49,6 +49,46 @@
     <string name="game_erase">지우개</string>
     <string name="game_notes">메모</string>
     <string name="game_notes_on">메모 켜짐</string>
+    <string name="game_hint">힌트</string>
+
+    <string name="hint_wrong_title">틀린 숫자가 있어요</string>
+    <string name="hint_wrong_body">표시된 칸의 숫자가 정답과 달라요. 먼저 이 칸을 고쳐 보세요.</string>
+    <string name="hint_wrong_action">지우기</string>
+    <string name="hint_placement_body">표시된 칸에 들어갈 숫자를 찾을 수 있어요. %1$s</string>
+    <string name="hint_reveal">정답 보기</string>
+    <string name="hint_close">닫기</string>
+
+    <string name="technique_naked_single">네이키드 싱글</string>
+    <string name="technique_naked_single_desc">이 칸에는 같은 행·열·박스에 없는 숫자가 하나만 남아 있어요.</string>
+    <string name="technique_hidden_single">히든 싱글</string>
+    <string name="technique_hidden_single_desc">강조된 줄(또는 박스)에서 어떤 숫자가 들어갈 수 있는 칸이 이 칸 하나뿐이에요.</string>
+    <string name="technique_naked_pair">네이키드 페어</string>
+    <string name="technique_naked_pair_desc">강조된 두 칸에는 같은 두 숫자만 들어갈 수 있어서, 같은 줄의 다른 칸에서는 그 두 숫자를 지울 수 있어요.</string>
+    <string name="technique_hidden_pair">히든 페어</string>
+    <string name="technique_hidden_pair_desc">두 숫자가 줄 안에서 강조된 두 칸에만 들어갈 수 있어서, 그 두 칸의 다른 후보는 지울 수 있어요.</string>
+    <string name="technique_pointing">포인팅</string>
+    <string name="technique_pointing_desc">박스 안에서 어떤 숫자가 강조된 칸들(한 줄)에만 올 수 있어서, 그 줄의 박스 밖 칸에서는 그 숫자를 지울 수 있어요.</string>
+    <string name="technique_naked_triple">네이키드 트리플</string>
+    <string name="technique_naked_triple_desc">강조된 세 칸에는 합쳐서 세 숫자만 들어갈 수 있어서, 같은 줄의 다른 칸에서는 그 숫자들을 지울 수 있어요.</string>
+    <string name="technique_hidden_triple">히든 트리플</string>
+    <string name="technique_hidden_triple_desc">세 숫자가 줄 안에서 강조된 세 칸에만 들어갈 수 있어서, 그 칸들의 다른 후보는 지울 수 있어요.</string>
+    <string name="technique_box_line_reduction">박스/라인 리덕션</string>
+    <string name="technique_box_line_reduction_desc">한 줄에서 어떤 숫자가 강조된 칸들(한 박스 안)에만 올 수 있어서, 그 박스의 다른 칸에서는 그 숫자를 지울 수 있어요.</string>
+    <string name="technique_x_wing">X-Wing</string>
+    <string name="technique_x_wing_desc">어떤 숫자가 두 줄에서 같은 두 칸 위치에만 올 수 있어서(강조된 네 칸), 그 두 열(행)의 다른 칸에서는 그 숫자를 지울 수 있어요.</string>
+    <string name="technique_xy_wing">XY-Wing</string>
+    <string name="technique_xy_wing_desc">강조된 세 칸(가운데 칸과 두 날개)의 후보 조합 때문에, 두 날개를 모두 보는 칸에서는 공통 숫자를 지울 수 있어요.</string>
+    <string name="technique_swordfish">Swordfish</string>
+    <string name="technique_swordfish_desc">어떤 숫자가 세 줄에서 같은 세 칸 위치 안에만 올 수 있어서, 그 세 열(행)의 다른 칸에서는 그 숫자를 지울 수 있어요.</string>
+
+    <string name="stats_played">플레이</string>
+    <string name="stats_win_rate">승률</string>
+    <string name="stats_best_time">최고 기록</string>
+    <string name="stats_average_time">평균 기록</string>
+    <string name="stats_hints">힌트 사용</string>
+    <string name="stats_none">-</string>
+    <string name="stats_cleared_value">%1$d / %2$d</string>
+    <string name="stats_percent">%1$d%%</string>
     <string name="game_not_found">퍼즐을 찾을 수 없습니다</string>
     <string name="game_cell_description">%1$d행 %2$d열, %3$s</string>
     <string name="game_cell_empty">빈칸</string>
@@ -56,7 +96,7 @@
     <string name="game_digit_description">숫자 %1$d, %2$d개 남음</string>
 
     <string name="game_won_title">클리어!</string>
-    <string name="game_won_message">시간 %1$s · 실수 %2$d회</string>
+    <string name="game_won_message">시간 %1$s · 실수 %2$d회 · 힌트 %3$d회</string>
     <string name="game_next_puzzle">다음 퍼즐</string>
     <string name="game_home">홈으로</string>
     <string name="game_lost_title">게임 오버</string>

@@ -186,6 +186,27 @@ class GameViewModelTest {
     }
 
     @Test
+    fun `힌트 사용 횟수가 저장되고 기록에 더해진다`() = runVmTest {
+        val vm = viewModel("E001")
+        runCurrent()
+        vm.onHint()
+        vm.onRevealHint()
+        vm.onHint()
+        vm.onDismissHint()
+        advanceTimeBy(600)
+        assertEquals(2, games.saved.value?.hintsUsed)
+
+        for (i in 0 until Grid.CELLS) {
+            if (vm.game().cells[i].isEmpty) {
+                vm.onCellClick(i)
+                vm.onDigit(solution[i])
+            }
+        }
+        advanceTimeBy(600)
+        assertEquals(2, games.recordList.value.single().hintsUsed)
+    }
+
+    @Test
     fun `메모 자동 정리 설정을 따른다`() = runVmTest {
         settings.update { it.copy(autoRemoveNotes = false) }
         val vm = viewModel("E001")

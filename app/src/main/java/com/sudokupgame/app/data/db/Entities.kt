@@ -1,5 +1,6 @@
 package com.sudokupgame.app.data.db
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -14,6 +15,7 @@ data class SavedGameEntity(
     val elapsedSeconds: Long,
     val notesMode: Boolean,
     val updatedAt: Long,
+    @ColumnInfo(defaultValue = "0") val hintsUsed: Int = 0,
 )
 
 @Entity(tableName = "puzzle_record")
@@ -25,4 +27,6 @@ data class PuzzleRecordEntity(
     val bestTimeSeconds: Long?,
     val totalWinTimeSeconds: Long,
     val lastPlayedAt: Long,
+    /** 끝낸 게임들에서 쓴 힌트 합계. */
+    @ColumnInfo(defaultValue = "0") val hintsUsed: Int = 0,
 )

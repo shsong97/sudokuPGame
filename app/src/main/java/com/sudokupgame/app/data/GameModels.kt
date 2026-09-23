@@ -11,6 +11,7 @@ data class SavedGame(
     val mistakes: Int,
     val elapsedSeconds: Long,
     val notesMode: Boolean,
+    val hintsUsed: Int = 0,
 )
 
 /** 퍼즐별 누적 기록. 끝낸 게임(클리어·게임 오버)만 센다. */
@@ -21,6 +22,7 @@ data class PuzzleRecord(
     val losses: Int,
     val bestTimeSeconds: Long?,
     val totalWinTimeSeconds: Long,
+    val hintsUsed: Int = 0,
 ) {
     val isCleared: Boolean get() = wins > 0
 }

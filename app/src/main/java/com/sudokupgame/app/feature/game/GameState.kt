@@ -5,10 +5,27 @@ import com.sudokupgame.app.data.SavedGame
 import com.sudokupgame.engine.Board
 import com.sudokupgame.engine.Difficulty
 import com.sudokupgame.engine.Grid
+import com.sudokupgame.engine.LogicalSolver
+import com.sudokupgame.engine.Technique
 
 const val MAX_MISTAKES = 3
 
 enum class GameStatus { PLAYING, PAUSED, WON, LOST }
+
+/** 화면에 떠 있는 힌트. 1단계는 칸과 이유를 보여주고, 2단계(reveal)에서 정답을 넣거나 오답을 지운다. */
+sealed interface Hint {
+    val target: Int
+
+    /** 틀린 숫자가 있으면 먼저 그것부터 알려준다. */
+    data class WrongValue(override val target: Int) : Hint
+
+    data class Placement(
+        override val target: Int,
+        val digit: Int,
+        val technique: Technique,
+        val focusCells: Set<Int>,
+    ) : Hint
+}
 
 data class CellState(
     val value: Int = 0,
@@ -37,6 +54,8 @@ data class GameState(
     val elapsedSeconds: Long = 0,
     val status: GameStatus = GameStatus.PLAYING,
     val history: List<List<CellState>> = emptyList(),
+    val hintsUsed: Int = 0,
+    val hint: Hint? = null,
 ) {
     val canUndo: Boolean get() = status == GameStatus.PLAYING && history.isNotEmpty()
 
@@ -47,7 +66,7 @@ data class GameState(
     fun remainingCount(digit: Int): Int = 9 - cells.count { it.value == digit && !it.isError }
 
     fun select(index: Int): GameState =
-        if (status == GameStatus.PLAYING) copy(selected = index) else this
+        if (status == GameStatus.PLAYING) copy(selected = index, hint = null) else this
 
     fun toggleNotesMode(): GameState = copy(notesMode = !notesMode)
 
@@ -99,10 +118,10 @@ data class GameState(
     /** 칸 상태만 되돌린다. 실수 횟수는 줄지 않는다. */
     fun undo(): GameState {
         if (!canUndo) return this
-        return copy(cells = history.last(), history = history.dropLast(1))
+        return copy(cells = history.last(), history = history.dropLast(1), hint = null)
     }
 
-    fun pause(): GameState = if (status == GameStatus.PLAYING) copy(status = GameStatus.PAUSED) else this
+    fun pause(): GameState = if (status == GameStatus.PLAYING) copy(status = GameStatus.PAUSED, hint = null) else this
 
     fun resume(): GameState = if (status == GameStatus.PAUSED) copy(status = GameStatus.PLAYING) else this
 
@@ -116,8 +135,43 @@ data class GameState(
         solution = solution,
     )
 
+    /** 1단계 힌트: 틀린 칸이 있으면 그 칸을, 없으면 다음에 확정할 수 있는 칸과 기법을 보여준다. */
+    fun requestHint(): GameState {
+        if (status != GameStatus.PLAYING || hint != null) return this
+        val wrong = cells.indexOfFirst { it.isError }
+        val hint = if (wrong >= 0) Hint.WrongValue(wrong) else findPlacementHint() ?: return this
+        return copy(hint = hint, selected = hint.target, hintsUsed = hintsUsed + 1)
+    }
+
+    /** 2단계 힌트: 정답을 넣거나(실수로 세지 않음) 틀린 숫자를 지운다. */
+    fun revealHint(autoRemoveNotes: Boolean = true): GameState = when (val h = hint) {
+        null -> this
+        is Hint.WrongValue -> copy(selected = h.target, hint = null).erase()
+        is Hint.Placement -> copy(selected = h.target, notesMode = false, hint = null)
+            .input(h.digit, autoRemoveNotes)
+            .copy(notesMode = notesMode)
+    }
+
+    fun dismissHint(): GameState = if (hint != null) copy(hint = null) else this
+
+    private fun findPlacementHint(): Hint.Placement? {
+        val board = Board.of(IntArray(Grid.CELLS) { cells[it].value })
+        val next = LogicalSolver.nextPlacement(board)
+        if (next != null) {
+            return Hint.Placement(
+                target = next.placement.index,
+                digit = next.placement.digit,
+                technique = next.technique,
+                focusCells = next.focusCells.toSet() - next.placement.index,
+            )
+        }
+        // 기법으로 진행할 수 없는 경우(내장 퍼즐에서는 일어나지 않음): 빈칸 하나의 정답을 알려준다.
+        val empty = cells.indexOfFirst { it.isEmpty }.takeIf { it >= 0 } ?: return null
+        return Hint.Placement(empty, solution[empty], Technique.NAKED_SINGLE, emptySet())
+    }
+
     private fun withCells(newCells: List<CellState>): GameState =
-        copy(cells = newCells, history = (history + listOf(cells)).takeLast(MAX_HISTORY))
+        copy(cells = newCells, history = (history + listOf(cells)).takeLast(MAX_HISTORY), hint = null)
 
     companion object {
         private const val MAX_HISTORY = 200
@@ -141,6 +195,7 @@ data class GameState(
             mistakes = saved.mistakes,
             elapsedSeconds = saved.elapsedSeconds,
             notesMode = saved.notesMode,
+            hintsUsed = saved.hintsUsed,
         )
     }
 
@@ -151,6 +206,7 @@ data class GameState(
         mistakes = mistakes,
         elapsedSeconds = elapsedSeconds,
         notesMode = notesMode,
+        hintsUsed = hintsUsed,
     )
 }
 
