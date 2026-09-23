@@ -6,7 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -17,6 +17,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -24,7 +25,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.sudokupgame.app.R
 
 @Composable
@@ -79,47 +79,57 @@ private fun ToolButton(
     }
 }
 
+/** 숫자 패드. [columns]가 9면 한 줄, 3이면 3×3 (가로 모드). */
 @Composable
 fun NumberPad(
     game: GameState,
     onDigit: (Int) -> Unit,
     modifier: Modifier = Modifier,
+    columns: Int = 9,
 ) {
-    Row(modifier.fillMaxWidth()) {
-        for (digit in 1..9) {
-            val remaining = game.remainingCount(digit)
-            val description = stringResource(R.string.game_digit_description, digit, remaining)
-            TextButton(
-                onClick = { onDigit(digit) },
-                enabled = remaining > 0,
-                shape = MaterialTheme.shapes.small,
-                contentPadding = PaddingValues(0.dp),
-                modifier = Modifier
-                    .weight(1f)
-                    .height(64.dp)
-                    .semantics { contentDescription = description },
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.clearAndSetSemantics {},
-                ) {
-                    Text(
-                        text = digit.toString(),
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = when {
-                            remaining == 0 -> MaterialTheme.colorScheme.outlineVariant
-                            game.notesMode -> MaterialTheme.colorScheme.onSurfaceVariant
-                            else -> MaterialTheme.colorScheme.primary
-                        },
-                    )
-                    Text(
-                        text = if (remaining > 0) remaining.toString() else "",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
+    Column(modifier.fillMaxWidth()) {
+        (1..9).chunked(columns).forEach { row ->
+            Row(Modifier.fillMaxWidth()) {
+                row.forEach { digit -> DigitButton(game, digit, onDigit, Modifier.weight(1f)) }
             }
+        }
+    }
+}
+
+@Composable
+private fun DigitButton(game: GameState, digit: Int, onDigit: (Int) -> Unit, modifier: Modifier) {
+    val remaining = game.remainingCount(digit)
+    val description = stringResource(R.string.game_digit_description, digit, remaining)
+    // 숫자는 이미 크므로 시스템 글꼴 크기에 따라 더 커지지 않게 dp 기준으로 고정한다.
+    val digitSize = with(LocalDensity.current) { 28.dp.toSp() }
+    TextButton(
+        onClick = { onDigit(digit) },
+        enabled = remaining > 0,
+        shape = MaterialTheme.shapes.small,
+        contentPadding = PaddingValues(0.dp),
+        modifier = modifier
+            .heightIn(min = 64.dp)
+            .semantics { contentDescription = description },
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.clearAndSetSemantics {},
+        ) {
+            Text(
+                text = digit.toString(),
+                fontSize = digitSize,
+                fontWeight = FontWeight.Medium,
+                color = when {
+                    remaining == 0 -> MaterialTheme.colorScheme.outlineVariant
+                    game.notesMode -> MaterialTheme.colorScheme.onSurfaceVariant
+                    else -> MaterialTheme.colorScheme.primary
+                },
+            )
+            Text(
+                text = if (remaining > 0) remaining.toString() else "",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }

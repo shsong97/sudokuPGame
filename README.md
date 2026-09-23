@@ -23,4 +23,12 @@
 ./gradlew :engine:test           # 엔진 단위 테스트
 ./gradlew testDebugUnitTest      # 앱 단위 테스트
 ./gradlew :puzzle-generator:run  # 퍼즐 생성
+./gradlew bundleRelease          # 스토어 업로드용 AAB (서명: keystore.properties)
 ```
+
+## 문서
+
+- [PLAN.md](PLAN.md) — 개발 플랜
+- [docs/RELEASE.md](docs/RELEASE.md) — Play Console 출시 절차
+- [docs/store/listing.md](docs/store/listing.md) — 스토어 등록 문구, 앱 콘텐츠 설문 답변
+- [docs/privacy-policy.md](docs/privacy-policy.md) — 개인정보처리방침

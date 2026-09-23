@@ -1,5 +1,7 @@
 package com.sudokupgame.app.feature.game
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -14,8 +16,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
@@ -68,10 +72,10 @@ fun SudokuBoard(
                             cellSize = cellSize,
                             highlightNote = selectedValue,
                             isSelected = index == selected,
+                            background = background,
                             modifier = Modifier
                                 .weight(1f)
                                 .fillMaxHeight()
-                                .background(background)
                                 .clickable { onCellClick(index) },
                         )
                     }
@@ -100,9 +104,11 @@ private fun SudokuCell(
     cellSize: Dp,
     highlightNote: Int?,
     isSelected: Boolean,
+    background: Color,
     modifier: Modifier,
 ) {
     val colors = MaterialTheme.colorScheme
+    val animatedBackground by animateColorAsState(background, animationSpec = tween(150), label = "cell")
     val density = LocalDensity.current
     val stateText = when {
         cell.isEmpty -> stringResource(R.string.game_cell_empty)
@@ -112,7 +118,7 @@ private fun SudokuCell(
     val description = stringResource(R.string.game_cell_description, row + 1, col + 1, stateText)
 
     Box(
-        modifier = modifier.semantics {
+        modifier = modifier.drawBehind { drawRect(animatedBackground) }.semantics {
             contentDescription = description
             selected = isSelected
         },

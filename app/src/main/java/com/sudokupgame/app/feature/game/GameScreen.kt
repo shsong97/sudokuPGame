@@ -1,15 +1,24 @@
 package com.sudokupgame.app.feature.game
 
+import androidx.activity.compose.LocalActivity
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -54,8 +63,11 @@ fun GameScreen(
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     val haptic = LocalHapticFeedback.current
 
-    // 앱이 백그라운드로 가면 자동 일시정지 + 저장.
-    LifecycleEventEffect(Lifecycle.Event.ON_STOP) { viewModel.onPause() }
+    // 앱이 백그라운드로 가면 자동 일시정지 + 저장. 화면 회전으로 다시 만들어질 때는 제외한다.
+    val activity = LocalActivity.current
+    LifecycleEventEffect(Lifecycle.Event.ON_STOP) {
+        if (activity?.isChangingConfigurations != true) viewModel.onPause()
+    }
 
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
@@ -143,61 +155,126 @@ private fun GameContent(
             )
         },
     ) { padding ->
-        Column(
-            modifier = Modifier
+        BoxWithConstraints(
+            Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = 12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
+                .padding(horizontal = 12.dp, vertical = 8.dp),
         ) {
-            Column(Modifier.widthIn(max = 480.dp)) {
+            if (maxWidth > maxHeight) {
+                // 가로: 보드는 높이에 맞추고, 오른쪽에 도구와 3×3 숫자 패드.
+                val boardWidth = minOf(maxHeight - INFO_ROW_HEIGHT, maxWidth * 0.6f)
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalArrangement = Arrangement.spacedBy(24.dp, Alignment.CenterHorizontally),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text(
-                        text = stringResource(R.string.game_mistakes, game.mistakes, MAX_MISTAKES),
-                        style = MaterialTheme.typography.titleSmall,
-                        color = if (game.mistakes > 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    if (settings.showTimer) {
-                        Text(
-                            text = formatTime(game.elapsedSeconds),
-                            style = MaterialTheme.typography.titleSmall.copy(fontFeatureSettings = "tnum"),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+                    Column(Modifier.width(boardWidth)) {
+                        InfoRow(game, settings.showTimer)
+                        BoardWithOverlay(game, settings, onCellClick, onResume)
+                    }
+                    Column(Modifier.widthIn(max = 360.dp).weight(1f, fill = false)) {
+                        Controls(game, onDigit, onErase, onUndo, onToggleNotes, onHint, onRevealHint, onDismissHint, padColumns = 3)
                     }
                 }
-
-                Box {
-                    SudokuBoard(
-                        game = game,
-                        onCellClick = onCellClick,
-                        highlightSameDigit = settings.highlightSameDigit,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    if (paused) PausedOverlay(onResume, Modifier.matchParentSize())
+            } else {
+                // 세로: 전체를 가운데로 모은다. 태블릿에서는 폭을 제한한다.
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    Column(Modifier.widthIn(max = 600.dp)) {
+                        InfoRow(game, settings.showTimer)
+                        BoardWithOverlay(game, settings, onCellClick, onResume)
+                        Spacer(Modifier.height(16.dp))
+                        Controls(game, onDigit, onErase, onUndo, onToggleNotes, onHint, onRevealHint, onDismissHint, padColumns = 9)
+                    }
                 }
-
-                Spacer(Modifier.height(16.dp))
-                val hint = game.hint
-                if (hint != null) {
-                    HintCard(hint = hint, onReveal = onRevealHint, onDismiss = onDismissHint)
-                } else {
-                    GameToolbar(
-                        canUndo = game.canUndo,
-                        notesMode = game.notesMode,
-                        onUndo = onUndo,
-                        onErase = onErase,
-                        onToggleNotes = onToggleNotes,
-                        onHint = onHint,
-                    )
-                }
-                Spacer(Modifier.height(8.dp))
-                NumberPad(game = game, onDigit = onDigit)
             }
         }
     }
+}
+
+private val INFO_ROW_HEIGHT = 40.dp
+
+@Composable
+private fun InfoRow(game: GameState, showTimer: Boolean) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = INFO_ROW_HEIGHT)
+            .padding(horizontal = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = stringResource(R.string.game_mistakes, game.mistakes, MAX_MISTAKES),
+            style = MaterialTheme.typography.titleSmall,
+            color = if (game.mistakes > 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        if (showTimer) {
+            Text(
+                text = formatTime(game.elapsedSeconds),
+                style = MaterialTheme.typography.titleSmall.copy(fontFeatureSettings = "tnum"),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+@Composable
+private fun BoardWithOverlay(
+    game: GameState,
+    settings: Settings,
+    onCellClick: (Int) -> Unit,
+    onResume: () -> Unit,
+) {
+    Box {
+        SudokuBoard(
+            game = game,
+            onCellClick = onCellClick,
+            highlightSameDigit = settings.highlightSameDigit,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        if (game.status == GameStatus.PAUSED) PausedOverlay(onResume, Modifier.matchParentSize())
+    }
+}
+
+@Composable
+private fun Controls(
+    game: GameState,
+    onDigit: (Int) -> Unit,
+    onErase: () -> Unit,
+    onUndo: () -> Unit,
+    onToggleNotes: () -> Unit,
+    onHint: () -> Unit,
+    onRevealHint: () -> Unit,
+    onDismissHint: () -> Unit,
+    padColumns: Int,
+) {
+    // 힌트가 뜨고 닫힐 때만 전환 효과. 힌트 내용이 바뀌는 것은 즉시 반영.
+    AnimatedContent(
+        targetState = game.hint,
+        contentKey = { it != null },
+        transitionSpec = { fadeIn() togetherWith fadeOut() using SizeTransform(clip = false) },
+        label = "hint",
+    ) { hint ->
+        if (hint != null) {
+            HintCard(hint = hint, onReveal = onRevealHint, onDismiss = onDismissHint)
+        } else {
+            GameToolbar(
+                canUndo = game.canUndo,
+                notesMode = game.notesMode,
+                onUndo = onUndo,
+                onErase = onErase,
+                onToggleNotes = onToggleNotes,
+                onHint = onHint,
+            )
+        }
+    }
+    Spacer(Modifier.height(8.dp))
+    NumberPad(game = game, onDigit = onDigit, columns = padColumns)
 }
 
 /** 일시정지 중에는 격자를 가린다. */
