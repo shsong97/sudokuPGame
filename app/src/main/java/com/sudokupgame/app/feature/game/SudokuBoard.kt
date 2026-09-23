@@ -34,10 +34,11 @@ fun SudokuBoard(
     game: GameState,
     onCellClick: (Int) -> Unit,
     modifier: Modifier = Modifier,
+    highlightSameDigit: Boolean = true,
 ) {
     val colors = MaterialTheme.colorScheme
     val selected = game.selected
-    val selectedValue = selected?.let { game.cells[it].value }?.takeIf { it != 0 }
+    val selectedValue = selected?.let { game.cells[it].value }?.takeIf { it != 0 && highlightSameDigit }
     val thickLine = colors.onSurface
     val thinLine = colors.outline.copy(alpha = 0.5f)
 

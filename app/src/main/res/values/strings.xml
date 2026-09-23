@@ -12,6 +12,31 @@
     <string name="settings_title">설정</string>
     <string name="navigate_back">뒤로</string>
     <string name="coming_soon">준비 중입니다</string>
+    <string name="cancel">취소</string>
+
+    <string name="home_continue_detail">%1$s · %2$s · %3$s</string>
+    <string name="overwrite_title">진행 중인 게임이 있어요</string>
+    <string name="overwrite_message">%1$s 퍼즐을 진행 중입니다. 새 퍼즐을 시작하면 진행 상황이 사라집니다.</string>
+    <string name="overwrite_confirm">새로 시작</string>
+
+    <string name="puzzles_tab">%1$s %2$d/%3$d</string>
+    <string name="puzzles_in_progress">진행 중</string>
+    <string name="puzzles_item_description">%1$d번 퍼즐</string>
+    <string name="puzzles_item_cleared">클리어, 최고 기록 %1$s</string>
+
+    <string name="settings_section_game">게임</string>
+    <string name="settings_section_display">화면</string>
+    <string name="settings_highlight_same_digit">같은 숫자 강조</string>
+    <string name="settings_highlight_same_digit_desc">선택한 칸과 같은 숫자를 강조합니다</string>
+    <string name="settings_auto_remove_notes">메모 자동 정리</string>
+    <string name="settings_auto_remove_notes_desc">숫자를 넣으면 같은 행·열·박스의 메모에서 지웁니다</string>
+    <string name="settings_show_timer">타이머 표시</string>
+    <string name="settings_vibration">진동</string>
+    <string name="settings_vibration_desc">실수했을 때 진동합니다</string>
+    <string name="settings_theme">테마</string>
+    <string name="settings_theme_system">시스템</string>
+    <string name="settings_theme_light">라이트</string>
+    <string name="settings_theme_dark">다크</string>
 
     <string name="new_game_choose_difficulty">난이도 선택</string>
 

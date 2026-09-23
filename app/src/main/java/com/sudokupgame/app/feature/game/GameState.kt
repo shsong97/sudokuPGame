@@ -1,6 +1,7 @@
 package com.sudokupgame.app.feature.game
 
 import com.sudokupgame.app.data.Puzzle
+import com.sudokupgame.app.data.SavedGame
 import com.sudokupgame.engine.Board
 import com.sudokupgame.engine.Difficulty
 import com.sudokupgame.engine.Grid
@@ -50,12 +51,13 @@ data class GameState(
 
     fun toggleNotesMode(): GameState = copy(notesMode = !notesMode)
 
-    fun input(digit: Int): GameState {
+    /** [autoRemoveNotes]가 켜져 있으면 정답을 넣을 때 같은 행·열·박스 메모에서 그 숫자를 지운다. */
+    fun input(digit: Int, autoRemoveNotes: Boolean = true): GameState {
         require(digit in 1..9)
         val index = selected ?: return this
         val cell = cells[index]
         if (status != GameStatus.PLAYING || cell.isLocked) return this
-        return if (notesMode) toggleNote(index, cell, digit) else placeDigit(index, cell, digit)
+        return if (notesMode) toggleNote(index, cell, digit) else placeDigit(index, cell, digit, autoRemoveNotes)
     }
 
     private fun toggleNote(index: Int, cell: CellState, digit: Int): GameState {
@@ -64,7 +66,7 @@ data class GameState(
         return withCells(cells.replace(index, cell.copy(notes = notes)))
     }
 
-    private fun placeDigit(index: Int, cell: CellState, digit: Int): GameState {
+    private fun placeDigit(index: Int, cell: CellState, digit: Int, autoRemoveNotes: Boolean): GameState {
         if (cell.value == digit) return this
         if (solution[index] != digit) {
             val mistakes = mistakes + 1
@@ -73,12 +75,13 @@ data class GameState(
                 status = if (mistakes >= MAX_MISTAKES) GameStatus.LOST else status,
             )
         }
-        // 정답: 칸을 확정하고, 같은 행·열·박스 메모에서 이 숫자를 지운다.
         val updated = cells.toMutableList()
         updated[index] = CellState(value = digit)
-        for (peer in Grid.peers[index]) {
-            val p = updated[peer]
-            if (digit in p.notes) updated[peer] = p.copy(notes = p.notes - digit)
+        if (autoRemoveNotes) {
+            for (peer in Grid.peers[index]) {
+                val p = updated[peer]
+                if (digit in p.notes) updated[peer] = p.copy(notes = p.notes - digit)
+            }
         }
         val next = withCells(updated)
         val solved = next.cells.withIndex().all { (i, c) -> c.value == solution[i] }
@@ -128,7 +131,27 @@ data class GameState(
             },
             solution = puzzle.solution,
         )
+
+        /** 저장된 게임을 이어서. 실행 취소 기록은 비어 있다. */
+        fun restore(puzzle: Puzzle, saved: SavedGame): GameState = GameState(
+            puzzleId = puzzle.id,
+            difficulty = puzzle.difficulty,
+            cells = saved.cells,
+            solution = puzzle.solution,
+            mistakes = saved.mistakes,
+            elapsedSeconds = saved.elapsedSeconds,
+            notesMode = saved.notesMode,
+        )
     }
+
+    fun toSavedGame(): SavedGame = SavedGame(
+        puzzleId = puzzleId,
+        difficulty = difficulty,
+        cells = cells,
+        mistakes = mistakes,
+        elapsedSeconds = elapsedSeconds,
+        notesMode = notesMode,
+    )
 }
 
 private fun <T> List<T>.replace(index: Int, value: T): List<T> =

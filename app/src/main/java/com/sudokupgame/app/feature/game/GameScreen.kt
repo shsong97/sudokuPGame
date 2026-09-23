@@ -23,9 +23,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -34,7 +37,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sudokupgame.app.R
+import com.sudokupgame.app.data.Settings
 import com.sudokupgame.app.ui.PlaceholderScreen
+import com.sudokupgame.app.ui.formatTime
 import com.sudokupgame.app.ui.label
 
 @Composable
@@ -46,9 +51,19 @@ fun GameScreen(
     viewModel: GameViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val settings by viewModel.settings.collectAsStateWithLifecycle()
+    val haptic = LocalHapticFeedback.current
 
-    // 앱이 백그라운드로 가면 자동 일시정지.
+    // 앱이 백그라운드로 가면 자동 일시정지 + 저장.
     LifecycleEventEffect(Lifecycle.Event.ON_STOP) { viewModel.onPause() }
+
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { event ->
+            when (event) {
+                GameEvent.Mistake -> if (settings.vibration) haptic.performHapticFeedback(HapticFeedbackType.Reject)
+            }
+        }
+    }
 
     when (val state = uiState) {
         GameUiState.Loading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -63,6 +78,7 @@ fun GameScreen(
         is GameUiState.Ready -> {
             GameContent(
                 game = state.game,
+                settings = settings,
                 onBack = onBack,
                 onCellClick = viewModel::onCellClick,
                 onDigit = viewModel::onDigit,
@@ -88,6 +104,7 @@ fun GameScreen(
 @Composable
 private fun GameContent(
     game: GameState,
+    settings: Settings,
     onBack: () -> Unit,
     onCellClick: (Int) -> Unit,
     onDigit: (Int) -> Unit,
@@ -137,15 +154,22 @@ private fun GameContent(
                         style = MaterialTheme.typography.titleSmall,
                         color = if (game.mistakes > 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    Text(
-                        text = formatTime(game.elapsedSeconds),
-                        style = MaterialTheme.typography.titleSmall.copy(fontFeatureSettings = "tnum"),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                    if (settings.showTimer) {
+                        Text(
+                            text = formatTime(game.elapsedSeconds),
+                            style = MaterialTheme.typography.titleSmall.copy(fontFeatureSettings = "tnum"),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
 
                 Box {
-                    SudokuBoard(game = game, onCellClick = onCellClick, modifier = Modifier.fillMaxWidth())
+                    SudokuBoard(
+                        game = game,
+                        onCellClick = onCellClick,
+                        highlightSameDigit = settings.highlightSameDigit,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
                     if (paused) PausedOverlay(onResume, Modifier.matchParentSize())
                 }
 
@@ -216,11 +240,4 @@ private fun GameResultDialog(
 
         GameStatus.PLAYING, GameStatus.PAUSED -> Unit
     }
-}
-
-internal fun formatTime(seconds: Long): String {
-    val h = seconds / 3600
-    val m = (seconds % 3600) / 60
-    val s = seconds % 60
-    return if (h > 0) "%d:%02d:%02d".format(h, m, s) else "%02d:%02d".format(m, s)
 }

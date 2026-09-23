@@ -4,7 +4,6 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.sudokupgame.app.data.PuzzleIds
 import com.sudokupgame.app.feature.game.GameScreen
 import com.sudokupgame.app.feature.home.HomeScreen
 import com.sudokupgame.app.feature.puzzles.PuzzlesScreen
@@ -19,14 +18,17 @@ fun SudokuNavHost() {
     NavHost(navController = navController, startDestination = HomeRoute) {
         composable<HomeRoute> {
             HomeScreen(
-                onNewGame = { difficulty -> navController.navigate(GameRoute(PuzzleIds.first(difficulty))) },
+                onStartGame = { id -> navController.navigate(GameRoute(id)) },
                 onPuzzles = { navController.navigate(PuzzlesRoute) },
                 onStats = { navController.navigate(StatsRoute) },
                 onSettings = { navController.navigate(SettingsRoute) },
             )
         }
         composable<PuzzlesRoute> {
-            PuzzlesScreen(onBack = onBack)
+            PuzzlesScreen(
+                onBack = onBack,
+                onStartGame = { id -> navController.navigate(GameRoute(id)) },
+            )
         }
         composable<GameRoute> {
             GameScreen(

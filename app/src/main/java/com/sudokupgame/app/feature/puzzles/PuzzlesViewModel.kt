@@ -1,0 +1,59 @@
+package com.sudokupgame.app.feature.puzzles
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.sudokupgame.app.data.GameRepository
+import com.sudokupgame.app.data.PuzzleRepository
+import com.sudokupgame.engine.Difficulty
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.stateIn
+import javax.inject.Inject
+
+data class PuzzleItem(
+    val id: String,
+    val number: Int,
+    val isCleared: Boolean,
+    val bestTimeSeconds: Long?,
+    val isInProgress: Boolean,
+)
+
+data class PuzzlesUiState(
+    val loading: Boolean = true,
+    val items: Map<Difficulty, List<PuzzleItem>> = emptyMap(),
+    val savedPuzzleId: String? = null,
+)
+
+@HiltViewModel
+class PuzzlesViewModel @Inject constructor(
+    puzzleRepository: PuzzleRepository,
+    gameRepository: GameRepository,
+) : ViewModel() {
+
+    val uiState: StateFlow<PuzzlesUiState> = combine(
+        flow { emit(puzzleRepository.puzzles()) },
+        gameRepository.records,
+        gameRepository.savedGame,
+    ) { puzzles, records, saved ->
+        val recordById = records.associateBy { it.puzzleId }
+        PuzzlesUiState(
+            loading = false,
+            items = puzzles.groupBy { it.difficulty }.mapValues { (_, list) ->
+                list.mapIndexed { i, puzzle ->
+                    val record = recordById[puzzle.id]
+                    PuzzleItem(
+                        id = puzzle.id,
+                        number = i + 1,
+                        isCleared = record?.isCleared == true,
+                        bestTimeSeconds = record?.bestTimeSeconds,
+                        isInProgress = saved?.puzzleId == puzzle.id,
+                    )
+                }
+            },
+            savedPuzzleId = saved?.puzzleId,
+        )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), PuzzlesUiState())
+}
