@@ -22,7 +22,7 @@
 ./gradlew installDebug           # 연결된 기기/에뮬레이터에 설치
 ./gradlew :engine:test           # 엔진 단위 테스트
 ./gradlew testDebugUnitTest      # 앱 단위 테스트
-./gradlew :puzzle-generator:run  # 퍼즐 생성
+./gradlew :puzzle-generator:run  # 퍼즐 추가 생성 (기존 퍼즐 유지, 난이도별 100개까지)
 ./gradlew bundleRelease          # 스토어 업로드용 AAB (서명: keystore.properties)
 ```
 

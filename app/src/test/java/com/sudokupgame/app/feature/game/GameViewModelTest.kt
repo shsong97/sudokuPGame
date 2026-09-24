@@ -235,6 +235,17 @@ class GameViewModelTest {
     }
 
     @Test
+    fun `저장된 게임이 퍼즐 데이터와 맞지 않으면 새로 시작한다`() = runVmTest {
+        val other = TestPuzzles.easy.copy(givens = TestPuzzles.easy.solution)
+        games.saved.value = GameState.new(other).toSavedGame().copy(mistakes = 2)
+
+        val vm = viewModel("E001")
+        runCurrent()
+        assertEquals(0, vm.game().mistakes)
+        assertTrue(vm.game().cells[empty].isEmpty)
+    }
+
+    @Test
     fun `메모 자동 정리 설정을 따른다`() = runVmTest {
         settings.update { it.copy(autoRemoveNotes = false) }
         val vm = viewModel("E001")

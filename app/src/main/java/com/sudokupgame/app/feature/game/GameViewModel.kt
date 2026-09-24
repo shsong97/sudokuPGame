@@ -74,7 +74,8 @@ class GameViewModel @Inject constructor(
                 _uiState.value = GameUiState.NotFound
                 return@launch
             }
-            val saved = gameRepository.getSavedGame()?.takeIf { it.puzzleId == puzzleId }
+            // 퍼즐 데이터가 바뀌어 저장된 게임과 맞지 않으면(주어진 숫자가 다르면) 새로 시작한다.
+            val saved = gameRepository.getSavedGame()?.takeIf { it.puzzleId == puzzleId && it.matches(puzzle) }
             val game = if (saved != null) GameState.restore(puzzle, saved, mode) else GameState.new(puzzle, mode)
             _uiState.value = GameUiState.Ready(game, puzzleRepository.nextPuzzleId(puzzleId))
             launch { autoSave() }

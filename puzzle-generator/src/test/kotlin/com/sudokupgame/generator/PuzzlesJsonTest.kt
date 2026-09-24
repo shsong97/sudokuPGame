@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.io.File
+import java.security.MessageDigest
 
 /** 앱에 내장된 puzzles.json 전체 검증. CI에서 매번 실행한다. */
 class PuzzlesJsonTest {
@@ -20,14 +21,29 @@ class PuzzlesJsonTest {
     )
 
     @Test
-    fun `난이도별 25개씩 총 100개이고 id가 유일하다`() {
+    fun `난이도별 100개씩 총 400개이고 id가 유일하다`() {
         assertEquals(1, file.version)
-        assertEquals(100, file.puzzles.size)
+        assertEquals(400, file.puzzles.size)
         assertEquals(file.puzzles.size, file.puzzles.map { it.id }.toSet().size)
         for (difficulty in Difficulty.entries) {
             val ids = file.puzzles.filter { it.difficulty == difficulty.name }.map { it.id }
-            assertEquals((1..25).map { idPrefix(difficulty) + it.toString().padStart(3, '0') }, ids)
+            assertEquals((1..100).map { idPrefix(difficulty) + it.toString().padStart(3, '0') }, ids)
         }
+    }
+
+    /**
+     * 1.0.0에 들어간 난이도별 첫 25개(E001~X025)는 id·내용이 절대 바뀌면 안 된다.
+     * 기기에 저장된 기록과 진행 중인 게임이 id로 이 퍼즐들을 가리키기 때문이다.
+     */
+    @Test
+    fun `처음 출시한 100개 퍼즐은 바뀌지 않는다`() {
+        val firstRelease = Difficulty.entries.flatMap { difficulty ->
+            file.puzzles.filter { it.difficulty == difficulty.name }.take(25)
+        }
+        val fingerprint = MessageDigest.getInstance("SHA-256")
+            .digest(firstRelease.joinToString("") { it.id + it.givens + it.solution }.toByteArray())
+            .joinToString("") { "%02x".format(it) }
+        assertEquals("87bcd3589b732d30d9e5c4abc9a3e7e4b82c8dbb63b8a13a97988ba9665726cb", fingerprint)
     }
 
     @Test
