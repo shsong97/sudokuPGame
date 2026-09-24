@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sudokupgame.app.R
+import com.sudokupgame.app.ui.AdBannerSlot
 import com.sudokupgame.app.ui.formatTime
 import com.sudokupgame.app.ui.label
 
@@ -47,6 +48,7 @@ fun StatsScreen(
     val stats by viewModel.stats.collectAsStateWithLifecycle()
 
     Scaffold(
+        bottomBar = { AdBannerSlot() },
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.stats_title)) },

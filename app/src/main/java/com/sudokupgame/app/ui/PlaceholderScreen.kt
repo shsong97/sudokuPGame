@@ -24,6 +24,7 @@ fun PlaceholderScreen(
     onBack: () -> Unit,
 ) {
     Scaffold(
+        bottomBar = { AdBannerSlot() },
         topBar = {
             TopAppBar(
                 title = { Text(title) },

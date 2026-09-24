@@ -31,6 +31,9 @@ android {
         versionName = "1.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // 하단 광고 자리에 위치 확인용 표시를 그릴지 (디버그 빌드만)
+        buildConfigField("boolean", "SHOW_AD_PLACEHOLDER", "false")
     }
 
     signingConfigs {
@@ -45,6 +48,9 @@ android {
     }
 
     buildTypes {
+        debug {
+            buildConfigField("boolean", "SHOW_AD_PLACEHOLDER", "true")
+        }
         release {
             // 키가 없으면 로컬 확인용으로 디버그 키로 서명한다. Play Console은 디버그 서명을 거부한다.
             signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
@@ -61,6 +67,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     testOptions {

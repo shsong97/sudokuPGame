@@ -43,6 +43,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sudokupgame.app.R
 import com.sudokupgame.app.data.GameMode
+import com.sudokupgame.app.ui.AdBannerSlot
 import com.sudokupgame.app.ui.GameModeSelector
 import com.sudokupgame.app.ui.OverwriteGameDialog
 import com.sudokupgame.app.ui.formatTime
@@ -66,6 +67,7 @@ fun PuzzlesScreen(
     }
 
     Scaffold(
+        bottomBar = { AdBannerSlot() },
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.puzzles_title)) },

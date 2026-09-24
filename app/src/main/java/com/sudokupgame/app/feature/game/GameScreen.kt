@@ -20,6 +20,8 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -48,6 +50,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sudokupgame.app.R
 import com.sudokupgame.app.data.GameMode
 import com.sudokupgame.app.data.Settings
+import com.sudokupgame.app.ui.AdBannerSlot
 import com.sudokupgame.app.ui.PlaceholderScreen
 import com.sudokupgame.app.ui.formatTime
 import com.sudokupgame.app.ui.label
@@ -135,6 +138,7 @@ private fun GameContent(
 ) {
     val paused = game.status == GameStatus.PAUSED
     Scaffold(
+        bottomBar = { AdBannerSlot() },
         topBar = {
             TopAppBar(
                 title = {
@@ -168,27 +172,35 @@ private fun GameContent(
             if (maxWidth > maxHeight) {
                 // 가로: 보드는 높이에 맞추고, 오른쪽에 도구와 3×3 숫자 패드.
                 val boardWidth = minOf(maxHeight - INFO_ROW_HEIGHT, maxWidth * 0.6f)
+                // 높이가 낮으면(휴대전화 가로 + 하단 광고) 숫자 패드를 한 줄로, 넉넉하면 3×3으로.
+                val padColumns = if (maxHeight < 360.dp) 9 else 3
                 Row(
                     modifier = Modifier.fillMaxSize(),
                     horizontalArrangement = Arrangement.spacedBy(24.dp, Alignment.CenterHorizontally),
-                    verticalAlignment = Alignment.CenterVertically,
+                    verticalAlignment = Alignment.Top,
                 ) {
                     Column(Modifier.width(boardWidth)) {
                         InfoRow(game, settings.showTimer)
                         BoardWithOverlay(game, settings, onCellClick, onResume)
                     }
-                    Column(Modifier.widthIn(max = 360.dp).weight(1f, fill = false)) {
-                        Controls(game, onDigit, onErase, onUndo, onToggleNotes, onHint, onRevealHint, onDismissHint, padColumns = 3)
+                    Column(
+                        Modifier
+                            .widthIn(max = 360.dp)
+                            .weight(1f, fill = false)
+                            .verticalScroll(rememberScrollState()),
+                    ) {
+                        Controls(game, onDigit, onErase, onUndo, onToggleNotes, onHint, onRevealHint, onDismissHint, padColumns)
                     }
                 }
             } else {
-                // 세로: 전체를 가운데로 모은다. 태블릿에서는 폭을 제한한다.
+                // 세로: 위쪽부터 배치한다. 태블릿에서는 폭을 제한하고, 키가 작은 화면에서는
+                // 조작부가 가려지지 않도록 보드를 남은 높이에 맞춰 줄인다.
+                val contentWidth = minOf(600.dp, maxWidth, maxHeight - PORTRAIT_CONTROLS_HEIGHT)
                 Column(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
                 ) {
-                    Column(Modifier.widthIn(max = 600.dp)) {
+                    Column(Modifier.width(contentWidth)) {
                         InfoRow(game, settings.showTimer)
                         BoardWithOverlay(game, settings, onCellClick, onResume)
                         Spacer(Modifier.height(16.dp))
@@ -201,6 +213,9 @@ private fun GameContent(
 }
 
 private val INFO_ROW_HEIGHT = 40.dp
+
+/** 세로 화면에서 보드 외에 필요한 높이: 정보 줄 + 여백 + 도구 모음 + 숫자 패드. */
+private val PORTRAIT_CONTROLS_HEIGHT = 210.dp
 
 @Composable
 private fun InfoRow(game: GameState, showTimer: Boolean) {

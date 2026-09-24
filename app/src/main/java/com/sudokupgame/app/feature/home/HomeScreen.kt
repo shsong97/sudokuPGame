@@ -38,6 +38,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sudokupgame.app.R
 import com.sudokupgame.app.data.GameMode
 import com.sudokupgame.app.data.SavedGame
+import com.sudokupgame.app.ui.AdBannerSlot
 import com.sudokupgame.app.ui.GameModeSelector
 import com.sudokupgame.app.ui.OverwriteGameDialog
 import com.sudokupgame.app.ui.formatTime
@@ -107,12 +108,13 @@ private fun HomeContent(
 ) {
     var choosingDifficulty by rememberSaveable { mutableStateOf(false) }
 
-    Scaffold { padding ->
+    Scaffold(bottomBar = { AdBannerSlot() }) { padding ->
         Column(
             modifier = Modifier.fillMaxSize().padding(padding).padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
         ) {
+            // 가운데보다 약간 위에 오도록 위 여백을 아래 여백보다 작게 준다.
+            Spacer(Modifier.weight(0.6f))
             Text(
                 text = stringResource(R.string.app_name),
                 style = MaterialTheme.typography.displaySmall,
@@ -167,6 +169,7 @@ private fun HomeContent(
             OutlinedButton(onClick = onSettings, modifier = buttonModifier) {
                 Text(stringResource(R.string.home_settings))
             }
+            Spacer(Modifier.weight(1f))
         }
     }
 

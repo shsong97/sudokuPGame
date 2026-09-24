@@ -31,6 +31,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sudokupgame.app.R
 import com.sudokupgame.app.data.Settings
 import com.sudokupgame.app.data.ThemeMode
+import com.sudokupgame.app.ui.AdBannerSlot
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,6 +42,7 @@ fun SettingsScreen(
     val settings by viewModel.settings.collectAsStateWithLifecycle()
 
     Scaffold(
+        bottomBar = { AdBannerSlot() },
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.settings_title)) },

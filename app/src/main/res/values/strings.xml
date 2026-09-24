@@ -13,6 +13,7 @@
     <string name="navigate_back">뒤로</string>
     <string name="coming_soon">준비 중입니다</string>
     <string name="cancel">취소</string>
+    <string name="ad_placeholder">광고 영역</string>
 
     <string name="home_continue_detail">%1$s · %2$s · %3$s</string>
     <string name="overwrite_title">진행 중인 게임이 있어요</string>
