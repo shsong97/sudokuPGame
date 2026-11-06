@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sudokupgame.app.R
+import com.sudokupgame.app.data.DailyStats
 import com.sudokupgame.app.ui.AdBannerSlot
 import com.sudokupgame.app.ui.formatTime
 import com.sudokupgame.app.ui.label
@@ -46,6 +47,7 @@ fun StatsScreen(
     viewModel: StatsViewModel = hiltViewModel(),
 ) {
     val stats by viewModel.stats.collectAsStateWithLifecycle()
+    val dailyStats by viewModel.dailyStats.collectAsStateWithLifecycle()
 
     Scaffold(
         bottomBar = { AdBannerSlot() },
@@ -70,7 +72,42 @@ fun StatsScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            dailyStats?.let { DailyCard(it, Modifier.widthIn(max = 560.dp)) }
             list.forEach { DifficultyCard(it, Modifier.widthIn(max = 560.dp)) }
+        }
+    }
+}
+
+@Composable
+private fun DailyCard(stats: DailyStats, modifier: Modifier = Modifier) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+        modifier = modifier.fillMaxWidth(),
+    ) {
+        Column(Modifier.padding(16.dp)) {
+            Text(
+                stringResource(R.string.stats_daily_title),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Spacer(Modifier.height(16.dp))
+            Row {
+                StatValue(
+                    stringResource(R.string.stats_daily_total),
+                    stringResource(R.string.stats_days, stats.totalCleared),
+                    Modifier.weight(1f),
+                )
+                StatValue(
+                    stringResource(R.string.stats_daily_current_streak),
+                    stringResource(R.string.stats_days, stats.currentStreak),
+                    Modifier.weight(1f),
+                )
+                StatValue(
+                    stringResource(R.string.stats_daily_best_streak),
+                    stringResource(R.string.stats_days, stats.bestStreak),
+                    Modifier.weight(1f),
+                )
+            }
         }
     }
 }

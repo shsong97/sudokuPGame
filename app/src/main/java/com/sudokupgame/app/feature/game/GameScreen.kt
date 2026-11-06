@@ -52,6 +52,7 @@ import com.sudokupgame.app.data.GameMode
 import com.sudokupgame.app.data.Settings
 import com.sudokupgame.app.ui.AdBannerSlot
 import com.sudokupgame.app.ui.PlaceholderScreen
+import com.sudokupgame.app.ui.formatDailyDate
 import com.sudokupgame.app.ui.formatTime
 import com.sudokupgame.app.ui.label
 
@@ -65,6 +66,7 @@ fun GameScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val settings by viewModel.settings.collectAsStateWithLifecycle()
+    val dailyStreak by viewModel.dailyStreak.collectAsStateWithLifecycle()
     val haptic = LocalHapticFeedback.current
 
     // 앱이 백그라운드로 가면 자동 일시정지 + 저장. 화면 회전으로 다시 만들어질 때는 제외한다.
@@ -110,6 +112,7 @@ fun GameScreen(
             GameResultDialog(
                 game = state.game,
                 nextPuzzleId = state.nextPuzzleId,
+                dailyStreak = dailyStreak,
                 onNextPuzzle = onNextPuzzle,
                 onHome = onHome,
                 onRestart = viewModel::onRestart,
@@ -143,7 +146,9 @@ private fun GameContent(
             TopAppBar(
                 title = {
                     val format = if (game.mode == GameMode.ANIMAL) R.string.game_title_animal_format else R.string.game_title_format
-                    Text(stringResource(format, game.difficulty.label(), game.puzzleId))
+                    val daily = game.dailyDate
+                    val name = if (daily != null) stringResource(R.string.game_title_daily, formatDailyDate(daily)) else game.puzzleId
+                    Text(stringResource(format, game.difficulty.label(), name))
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -314,6 +319,7 @@ private fun PausedOverlay(onResume: () -> Unit, modifier: Modifier) {
 private fun GameResultDialog(
     game: GameState,
     nextPuzzleId: String?,
+    dailyStreak: Int,
     onNextPuzzle: (String, GameMode) -> Unit,
     onHome: () -> Unit,
     onRestart: () -> Unit,
@@ -322,9 +328,18 @@ private fun GameResultDialog(
     when (game.status) {
         GameStatus.WON -> AlertDialog(
             onDismissRequest = {},
-            title = { Text(stringResource(R.string.game_won_title)) },
+            title = {
+                Text(stringResource(if (game.dailyDate != null) R.string.daily_won_title else R.string.game_won_title))
+            },
             text = {
-                Text(stringResource(R.string.game_won_message, formatTime(game.elapsedSeconds), game.mistakes, game.hintsUsed))
+                val message = stringResource(R.string.game_won_message, formatTime(game.elapsedSeconds), game.mistakes, game.hintsUsed)
+                Text(
+                    if (game.dailyDate != null && dailyStreak > 0) {
+                        message + "\n" + stringResource(R.string.daily_streak, dailyStreak)
+                    } else {
+                        message
+                    },
+                )
             },
             confirmButton = {
                 if (nextPuzzleId != null) {

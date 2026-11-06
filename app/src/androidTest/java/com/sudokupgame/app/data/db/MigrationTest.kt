@@ -4,6 +4,7 @@ import androidx.room.testing.MigrationTestHelper
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -61,6 +62,29 @@ class MigrationTest {
                 assertEquals("M002", c.getString(0))
                 assertEquals(2, c.getInt(1))
                 assertEquals("NUMBER", c.getString(2))
+            }
+        }
+    }
+
+    @Test
+    fun migrate3To4_keepsSavedGameAsNormalGameAndAddsDailyTable() {
+        helper.createDatabase(DB_NAME, 3).use { db ->
+            db.execSQL(
+                "INSERT INTO saved_game (id, puzzleId, difficulty, cells, mistakes, elapsedSeconds, notesMode, updatedAt, hintsUsed, mode) " +
+                    "VALUES (0, 'H010', 'HARD', '${"00000".repeat(81)}', 1, 30, 0, 0, 0, 'ANIMAL')",
+            )
+        }
+
+        helper.runMigrationsAndValidate(DB_NAME, 4, true).use { db ->
+            db.query("SELECT puzzleId, mode, dailyDate FROM saved_game").use { c ->
+                c.moveToFirst()
+                assertEquals("H010", c.getString(0))
+                assertEquals("ANIMAL", c.getString(1))
+                assertTrue(c.isNull(2))
+            }
+            db.query("SELECT COUNT(*) FROM daily_record").use { c ->
+                c.moveToFirst()
+                assertEquals(0, c.getInt(0))
             }
         }
     }

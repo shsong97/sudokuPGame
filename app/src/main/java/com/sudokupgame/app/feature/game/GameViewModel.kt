@@ -3,11 +3,13 @@ package com.sudokupgame.app.feature.game
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.sudokupgame.app.data.DailyRecord
 import com.sudokupgame.app.data.GameMode
 import com.sudokupgame.app.data.GameRepository
 import com.sudokupgame.app.data.PuzzleRepository
 import com.sudokupgame.app.data.Settings
 import com.sudokupgame.app.data.SettingsRepository
+import com.sudokupgame.app.data.currentStreak
 import com.sudokupgame.app.di.ApplicationScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
@@ -29,6 +31,8 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.time.Clock
+import java.time.LocalDate
 import javax.inject.Inject
 
 sealed interface GameUiState {
@@ -51,16 +55,23 @@ class GameViewModel @Inject constructor(
     private val gameRepository: GameRepository,
     settingsRepository: SettingsRepository,
     @param:ApplicationScope private val appScope: CoroutineScope,
+    private val clock: Clock,
 ) : ViewModel() {
 
     private val puzzleId: String = checkNotNull(savedStateHandle[PUZZLE_ID_KEY])
     private val mode: GameMode = savedStateHandle[MODE_KEY] ?: GameMode.NUMBER
+    private val dailyDate: LocalDate? = savedStateHandle.get<String>(DAILY_DATE_KEY)?.let(LocalDate::parse)
 
     private val _uiState = MutableStateFlow<GameUiState>(GameUiState.Loading)
     val uiState: StateFlow<GameUiState> = _uiState.asStateFlow()
 
     val settings: StateFlow<Settings> = settingsRepository.settings
         .stateIn(viewModelScope, SharingStarted.Eagerly, Settings())
+
+    /** 데일리 챌린지 연속 클리어 일수 (클리어 화면에 표시). */
+    val dailyStreak: StateFlow<Int> = gameRepository.dailyRecords
+        .map { records -> currentStreak(records.mapTo(mutableSetOf()) { it.date }, LocalDate.now(clock)) }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, 0)
 
     private val writeMutex = Mutex()
 
@@ -76,8 +87,14 @@ class GameViewModel @Inject constructor(
             }
             // 퍼즐 데이터가 바뀌어 저장된 게임과 맞지 않으면(주어진 숫자가 다르면) 새로 시작한다.
             val saved = gameRepository.getSavedGame()?.takeIf { it.puzzleId == puzzleId && it.matches(puzzle) }
-            val game = if (saved != null) GameState.restore(puzzle, saved, mode) else GameState.new(puzzle, mode)
-            _uiState.value = GameUiState.Ready(game, puzzleRepository.nextPuzzleId(puzzleId))
+            val game = if (saved != null) {
+                GameState.restore(puzzle, saved, mode, dailyDate ?: saved.dailyDate)
+            } else {
+                GameState.new(puzzle, mode, dailyDate)
+            }
+            // 데일리 챌린지는 "다음 퍼즐"로 이어지지 않는다.
+            val next = if (game.dailyDate == null) puzzleRepository.nextPuzzleId(puzzleId) else null
+            _uiState.value = GameUiState.Ready(game, next)
             launch { autoSave() }
             runTimer()
         }
@@ -177,6 +194,18 @@ class GameViewModel @Inject constructor(
                 elapsedSeconds = game.elapsedSeconds,
                 hintsUsed = game.hintsUsed,
             )
+            val date = game.dailyDate
+            if (date != null && game.status == GameStatus.WON) {
+                gameRepository.recordDailyClear(
+                    DailyRecord(
+                        date = date,
+                        puzzleId = game.puzzleId,
+                        elapsedSeconds = game.elapsedSeconds,
+                        mistakes = game.mistakes,
+                        hintsUsed = game.hintsUsed,
+                    ),
+                )
+            }
             gameRepository.clearSavedGame()
         }
     }
@@ -185,6 +214,7 @@ class GameViewModel @Inject constructor(
         /** GameRoute.puzzleId 와 같은 이름. 타입 안전 라우트는 속성 이름을 키로 쓴다. */
         const val PUZZLE_ID_KEY = "puzzleId"
         const val MODE_KEY = "mode"
+        const val DAILY_DATE_KEY = "dailyDate"
         private const val SAVE_DEBOUNCE_MILLIS = 500L
         private const val TIME_SAVE_INTERVAL_SECONDS = 10
     }

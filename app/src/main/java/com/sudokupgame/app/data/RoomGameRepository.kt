@@ -1,12 +1,14 @@
 package com.sudokupgame.app.data
 
 import androidx.room.withTransaction
+import com.sudokupgame.app.data.db.DailyRecordEntity
 import com.sudokupgame.app.data.db.PuzzleRecordEntity
 import com.sudokupgame.app.data.db.SavedGameEntity
 import com.sudokupgame.app.data.db.SudokuDatabase
 import com.sudokupgame.engine.Difficulty
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -17,6 +19,7 @@ class RoomGameRepository @Inject constructor(
 
     private val savedGameDao = db.savedGameDao()
     private val recordDao = db.puzzleRecordDao()
+    private val dailyDao = db.dailyRecordDao()
 
     override val savedGame: Flow<SavedGame?> = savedGameDao.observe().map { it?.toModel() }
 
@@ -34,6 +37,7 @@ class RoomGameRepository @Inject constructor(
                 updatedAt = System.currentTimeMillis(),
                 hintsUsed = game.hintsUsed,
                 mode = game.mode.name,
+                dailyDate = game.dailyDate?.toEpochDay(),
             ),
         )
     }
@@ -68,6 +72,32 @@ class RoomGameRepository @Inject constructor(
         }
     }
 
+    override val dailyRecords: Flow<List<DailyRecord>> =
+        dailyDao.observeAll().map { list ->
+            list.map {
+                DailyRecord(
+                    date = LocalDate.ofEpochDay(it.date),
+                    puzzleId = it.puzzleId,
+                    elapsedSeconds = it.elapsedSeconds,
+                    mistakes = it.mistakes,
+                    hintsUsed = it.hintsUsed,
+                )
+            }
+        }
+
+    override suspend fun recordDailyClear(record: DailyRecord) {
+        dailyDao.insertIfAbsent(
+            DailyRecordEntity(
+                date = record.date.toEpochDay(),
+                puzzleId = record.puzzleId,
+                elapsedSeconds = record.elapsedSeconds,
+                mistakes = record.mistakes,
+                hintsUsed = record.hintsUsed,
+                clearedAt = System.currentTimeMillis(),
+            ),
+        )
+    }
+
     private fun SavedGameEntity.toModel() = SavedGame(
         puzzleId = puzzleId,
         difficulty = Difficulty.valueOf(difficulty),
@@ -77,6 +107,7 @@ class RoomGameRepository @Inject constructor(
         notesMode = notesMode,
         hintsUsed = hintsUsed,
         mode = runCatching { GameMode.valueOf(mode) }.getOrDefault(GameMode.NUMBER),
+        dailyDate = dailyDate?.let(LocalDate::ofEpochDay),
     )
 
     private fun PuzzleRecordEntity.toModel() = PuzzleRecord(
