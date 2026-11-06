@@ -8,6 +8,7 @@ import com.sudokupgame.engine.Difficulty
 import com.sudokupgame.engine.Grid
 import com.sudokupgame.engine.LogicalSolver
 import com.sudokupgame.engine.Technique
+import java.time.LocalDate
 
 const val MAX_MISTAKES = 3
 
@@ -59,6 +60,8 @@ data class GameState(
     val hint: Hint? = null,
     /** 표시 방식. 규칙에는 영향이 없다. */
     val mode: GameMode = GameMode.NUMBER,
+    /** 데일리 챌린지로 하는 게임이면 그 날짜. */
+    val dailyDate: LocalDate? = null,
 ) {
     val canUndo: Boolean get() = status == GameStatus.PLAYING && history.isNotEmpty()
 
@@ -137,6 +140,7 @@ data class GameState(
         cells = cells.map { if (it.isGiven) it else CellState() },
         solution = solution,
         mode = mode,
+        dailyDate = dailyDate,
     )
 
     /** 1단계 힌트: 틀린 칸이 있으면 그 칸을, 없으면 다음에 확정할 수 있는 칸과 기법을 보여준다. */
@@ -180,7 +184,7 @@ data class GameState(
     companion object {
         private const val MAX_HISTORY = 200
 
-        fun new(puzzle: Puzzle, mode: GameMode = GameMode.NUMBER): GameState = GameState(
+        fun new(puzzle: Puzzle, mode: GameMode = GameMode.NUMBER, dailyDate: LocalDate? = null): GameState = GameState(
             puzzleId = puzzle.id,
             difficulty = puzzle.difficulty,
             cells = List(Grid.CELLS) { i ->
@@ -189,10 +193,19 @@ data class GameState(
             },
             solution = puzzle.solution,
             mode = mode,
+            dailyDate = dailyDate,
         )
 
-        /** 저장된 게임을 이어서. 실행 취소 기록은 비어 있다. [mode]로 표시 방식을 바꿔 이어갈 수 있다. */
-        fun restore(puzzle: Puzzle, saved: SavedGame, mode: GameMode = saved.mode): GameState = GameState(
+        /**
+         * 저장된 게임을 이어서. 실행 취소 기록은 비어 있다. [mode]로 표시 방식을 바꿔 이어갈 수 있고,
+         * [dailyDate]를 주면 데일리 챌린지로 이어간다.
+         */
+        fun restore(
+            puzzle: Puzzle,
+            saved: SavedGame,
+            mode: GameMode = saved.mode,
+            dailyDate: LocalDate? = saved.dailyDate,
+        ): GameState = GameState(
             puzzleId = puzzle.id,
             difficulty = puzzle.difficulty,
             cells = saved.cells,
@@ -202,6 +215,7 @@ data class GameState(
             notesMode = saved.notesMode,
             hintsUsed = saved.hintsUsed,
             mode = mode,
+            dailyDate = dailyDate,
         )
     }
 
@@ -214,6 +228,7 @@ data class GameState(
         notesMode = notesMode,
         hintsUsed = hintsUsed,
         mode = mode,
+        dailyDate = dailyDate,
     )
 }
 

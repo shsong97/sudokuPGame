@@ -10,7 +10,12 @@ data object HomeRoute
 data object PuzzlesRoute
 
 @Serializable
-data class GameRoute(val puzzleId: String, val mode: GameMode = GameMode.NUMBER)
+data class GameRoute(
+    val puzzleId: String,
+    val mode: GameMode = GameMode.NUMBER,
+    /** 데일리 챌린지로 시작하면 그 날짜 (ISO, 예: 2026-11-06). */
+    val dailyDate: String? = null,
+)
 
 @Serializable
 data object StatsRoute

@@ -22,4 +22,10 @@ interface GameRepository {
         elapsedSeconds: Long,
         hintsUsed: Int,
     )
+
+    /** 데일리 챌린지 클리어 기록 (날짜순). */
+    val dailyRecords: Flow<List<DailyRecord>>
+
+    /** 데일리 챌린지 클리어를 남긴다. 그 날짜에 이미 기록이 있으면 무시한다. */
+    suspend fun recordDailyClear(record: DailyRecord)
 }

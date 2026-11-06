@@ -3,6 +3,7 @@ package com.sudokupgame.app.data
 import com.sudokupgame.app.feature.game.CellState
 import com.sudokupgame.engine.Difficulty
 import com.sudokupgame.engine.Grid
+import java.time.LocalDate
 
 /** 진행 중인 게임 (한 번에 1개). 실행 취소 기록은 저장하지 않는다. */
 data class SavedGame(
@@ -14,6 +15,8 @@ data class SavedGame(
     val notesMode: Boolean,
     val hintsUsed: Int = 0,
     val mode: GameMode = GameMode.NUMBER,
+    /** 데일리 챌린지로 시작한 게임이면 그 날짜. */
+    val dailyDate: LocalDate? = null,
 ) {
     /** 저장된 칸의 주어진 숫자가 [puzzle]과 같은지. 퍼즐 데이터가 바뀐 경우를 걸러낸다. */
     fun matches(puzzle: Puzzle): Boolean =

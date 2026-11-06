@@ -45,6 +45,16 @@ class FakeGameRepository : GameRepository {
         )
         recordList.value = recordList.value.filter { it.puzzleId != puzzleId } + new
     }
+
+    val dailyList = MutableStateFlow<List<DailyRecord>>(emptyList())
+
+    override val dailyRecords: Flow<List<DailyRecord>> = dailyList
+
+    override suspend fun recordDailyClear(record: DailyRecord) {
+        if (dailyList.value.none { it.date == record.date }) {
+            dailyList.value = (dailyList.value + record).sortedBy { it.date }
+        }
+    }
 }
 
 class FakeSettingsRepository(initial: Settings = Settings()) : SettingsRepository {

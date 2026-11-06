@@ -1,6 +1,8 @@
 package com.sudokupgame.app.data.db
 
 import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
@@ -30,4 +32,14 @@ interface PuzzleRecordDao {
 
     @Upsert
     suspend fun upsert(entity: PuzzleRecordEntity)
+}
+
+@Dao
+interface DailyRecordDao {
+    @Query("SELECT * FROM daily_record ORDER BY date")
+    fun observeAll(): Flow<List<DailyRecordEntity>>
+
+    /** 이미 클리어한 날짜면 처음 기록을 그대로 둔다. */
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertIfAbsent(entity: DailyRecordEntity)
 }

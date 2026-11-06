@@ -12,6 +12,7 @@ import com.sudokupgame.app.data.FakeSettingsRepository
 import com.sudokupgame.app.data.GameMode
 import com.sudokupgame.app.data.Settings
 import com.sudokupgame.engine.Grid
+import com.sudokupgame.app.data.DailyRecord
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -29,6 +30,9 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import java.time.Clock
+import java.time.LocalDate
+import java.time.ZoneOffset
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class GameViewModelTest {
@@ -40,6 +44,8 @@ class GameViewModelTest {
     private val solution = TestPuzzles.easy.solution
     private val empty = Grid.index(0, 2)
     private val wrong = if (solution[empty] == 1) 2 else 1
+    private val today = LocalDate.of(2026, 11, 6)
+    private val clock = Clock.fixed(today.atStartOfDay().toInstant(ZoneOffset.UTC), ZoneOffset.UTC)
 
     @BeforeEach
     fun setUp() = Dispatchers.setMain(dispatcher)
@@ -60,15 +66,22 @@ class GameViewModelTest {
     }
 
     /** 앱 스코프 대신 테스트 스코프의 backgroundScope를 넘긴다. */
-    private fun TestScope.viewModel(id: String, mode: GameMode = GameMode.NUMBER): GameViewModel {
+    private fun TestScope.viewModel(id: String, mode: GameMode = GameMode.NUMBER, dailyDate: LocalDate? = null): GameViewModel {
         val factory = viewModelFactory {
             initializer {
                 GameViewModel(
-                    SavedStateHandle(mapOf(GameViewModel.PUZZLE_ID_KEY to id, GameViewModel.MODE_KEY to mode)),
+                    SavedStateHandle(
+                        mapOf(
+                            GameViewModel.PUZZLE_ID_KEY to id,
+                            GameViewModel.MODE_KEY to mode,
+                            GameViewModel.DAILY_DATE_KEY to dailyDate?.toString(),
+                        ),
+                    ),
                     puzzles,
                     games,
                     settings,
                     backgroundScope,
+                    clock,
                 )
             }
         }
@@ -260,5 +273,72 @@ class GameViewModelTest {
         vm.onDigit(digit)
         assertTrue(digit in vm.game().cells[peer].notes)
         assertFalse(Settings().autoRemoveNotes == vm.settings.value.autoRemoveNotes)
+    }
+
+    private fun GameViewModel.solveAll() {
+        for (i in 0 until Grid.CELLS) {
+            if (game().cells[i].isEmpty) {
+                onCellClick(i)
+                onDigit(solution[i])
+            }
+        }
+    }
+
+    @Test
+    fun `데일리 챌린지를 클리어하면 날짜별 기록과 연속 일수를 남긴다`() = runVmTest {
+        games.dailyList.value = listOf(DailyRecord(today.minusDays(1), "E002", 100, 0, 0))
+        val vm = viewModel("E001", dailyDate = today)
+        runCurrent()
+        assertEquals(today, vm.game().dailyDate)
+        assertNull((vm.uiState.value as GameUiState.Ready).nextPuzzleId)
+
+        advanceTimeBy(4_001)
+        vm.solveAll()
+        advanceTimeBy(600)
+        val record = games.dailyList.value.last()
+        assertEquals(today, record.date)
+        assertEquals("E001", record.puzzleId)
+        assertEquals(4L, record.elapsedSeconds)
+        assertEquals(2, vm.dailyStreak.value)
+        // 일반 퍼즐 기록에도 더해진다.
+        assertEquals(1, games.recordList.value.single().wins)
+    }
+
+    @Test
+    fun `데일리 챌린지에서 게임 오버되면 데일리 기록은 남지 않는다`() = runVmTest {
+        val vm = viewModel("E001", dailyDate = today)
+        runCurrent()
+        vm.onCellClick(empty)
+        (1..9).filter { it != solution[empty] }.take(3).forEach { vm.onDigit(it) }
+        advanceTimeBy(600)
+        assertEquals(GameStatus.LOST, vm.game().status)
+        assertTrue(games.dailyList.value.isEmpty())
+    }
+
+    @Test
+    fun `데일리 챌린지는 저장되고 이어하기해도 데일리로 남는다`() = runVmTest {
+        val first = viewModel("E001", dailyDate = today)
+        runCurrent()
+        first.onCellClick(empty)
+        first.onDigit(solution[empty])
+        advanceTimeBy(600)
+        assertEquals(today, games.saved.value?.dailyDate)
+        store.clear()
+        runCurrent()
+
+        // 이어하기는 날짜 없이 열어도 저장된 날짜를 쓴다.
+        val resumed = viewModel("E001")
+        runCurrent()
+        assertEquals(today, resumed.game().dailyDate)
+        assertEquals(solution[empty], resumed.game().cells[empty].value)
+    }
+
+    @Test
+    fun `일반 게임은 클리어해도 데일리 기록이 없다`() = runVmTest {
+        val vm = viewModel("E001")
+        runCurrent()
+        vm.solveAll()
+        advanceTimeBy(600)
+        assertTrue(games.dailyList.value.isEmpty())
     }
 }

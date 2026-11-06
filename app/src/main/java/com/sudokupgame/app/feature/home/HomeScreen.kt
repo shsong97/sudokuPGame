@@ -3,6 +3,7 @@ package com.sudokupgame.app.feature.home
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -11,6 +12,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.ListItem
@@ -34,6 +37,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sudokupgame.app.R
 import com.sudokupgame.app.data.GameMode
@@ -41,15 +46,18 @@ import com.sudokupgame.app.data.SavedGame
 import com.sudokupgame.app.ui.AdBannerSlot
 import com.sudokupgame.app.ui.GameModeSelector
 import com.sudokupgame.app.ui.OverwriteGameDialog
+import com.sudokupgame.app.ui.formatDailyDate
 import com.sudokupgame.app.ui.formatTime
 import com.sudokupgame.app.ui.label
 import com.sudokupgame.app.ui.theme.SudokuTheme
 import com.sudokupgame.engine.Difficulty
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 
 @Composable
 fun HomeScreen(
-    onStartGame: (String, GameMode) -> Unit,
+    /** 퍼즐 id, 표시 모드, 데일리 챌린지 날짜(ISO, 아니면 null). */
+    onStartGame: (String, GameMode, String?) -> Unit,
     onPuzzles: () -> Unit,
     onStats: () -> Unit,
     onSettings: () -> Unit,
@@ -59,20 +67,36 @@ fun HomeScreen(
     val loaded = uiState as? HomeUiState.Loaded
     val savedGame = loaded?.savedGame
     val mode by viewModel.mode.collectAsStateWithLifecycle()
+    val daily by viewModel.daily.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     var pendingPuzzleId by rememberSaveable { mutableStateOf<String?>(null) }
+    var pendingDailyDate by rememberSaveable { mutableStateOf<String?>(null) }
+
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.refreshDaily() }
+
+    /** 진행 중인 다른 퍼즐이 있으면 덮어쓸지 먼저 묻는다. */
+    val start: (String, String?) -> Unit = { id, dailyDate ->
+        val saved = savedGame
+        if (saved != null && saved.puzzleId != id) {
+            pendingPuzzleId = id
+            pendingDailyDate = dailyDate
+        } else {
+            onStartGame(id, mode, dailyDate)
+        }
+    }
 
     HomeContent(
         loading = loaded == null,
         savedGame = savedGame,
+        daily = daily,
         mode = mode,
         onModeChange = viewModel::setMode,
-        onContinue = { savedGame?.let { onStartGame(it.puzzleId, it.mode) } },
+        onContinue = { savedGame?.let { onStartGame(it.puzzleId, it.mode, it.dailyDate?.toString()) } },
+        onDaily = { daily?.let { start(it.puzzleId, it.date.toString()) } },
         onNewGame = { difficulty ->
             scope.launch {
                 val id = viewModel.puzzleForNewGame(difficulty) ?: return@launch
-                val saved = savedGame
-                if (saved != null && saved.puzzleId != id) pendingPuzzleId = id else onStartGame(id, mode)
+                start(id, null)
             }
         },
         onPuzzles = onPuzzles,
@@ -87,7 +111,7 @@ fun HomeScreen(
             savedPuzzleId = saved.puzzleId,
             onConfirm = {
                 pendingPuzzleId = null
-                onStartGame(pending, mode)
+                onStartGame(pending, mode, pendingDailyDate)
             },
             onDismiss = { pendingPuzzleId = null },
         )
@@ -98,9 +122,11 @@ fun HomeScreen(
 private fun HomeContent(
     loading: Boolean,
     savedGame: SavedGame?,
+    daily: DailyUiState?,
     mode: GameMode,
     onModeChange: (GameMode) -> Unit,
     onContinue: () -> Unit,
+    onDaily: () -> Unit,
     onNewGame: (Difficulty) -> Unit,
     onPuzzles: () -> Unit,
     onStats: () -> Unit,
@@ -121,9 +147,13 @@ private fun HomeContent(
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,
             )
-            Spacer(Modifier.height(48.dp))
+            Spacer(Modifier.height(32.dp))
 
             val buttonModifier = Modifier.fillMaxWidth().widthIn(max = 320.dp)
+            if (!loading && daily != null) {
+                DailyCard(daily = daily, onClick = onDaily, modifier = buttonModifier)
+                Spacer(Modifier.height(16.dp))
+            }
             if (loading) {
                 // 저장된 게임 확인 전에는 버튼을 그리지 않는다 (대부분 수 ms 이내).
             } else if (savedGame != null) {
@@ -186,6 +216,63 @@ private fun HomeContent(
     }
 }
 
+@Composable
+private fun DailyCard(daily: DailyUiState, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val record = daily.todayRecord
+    Card(
+        onClick = onClick,
+        colors = CardDefaults.cardColors(
+            containerColor = if (record != null) {
+                MaterialTheme.colorScheme.surfaceContainer
+            } else {
+                MaterialTheme.colorScheme.tertiaryContainer
+            },
+        ),
+        modifier = modifier,
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.daily_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Text(
+                    text = stringResource(R.string.daily_subtitle, formatDailyDate(daily.date), daily.difficulty.label()),
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+            Column(horizontalAlignment = Alignment.End) {
+                if (record != null) {
+                    Text(
+                        text = stringResource(R.string.daily_cleared),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                    Text(
+                        text = formatTime(record.elapsedSeconds),
+                        style = MaterialTheme.typography.labelSmall.copy(fontFeatureSettings = "tnum"),
+                    )
+                } else {
+                    Text(
+                        text = stringResource(R.string.daily_play),
+                        style = MaterialTheme.typography.labelLarge,
+                    )
+                }
+                if (daily.streak > 0) {
+                    Text(
+                        text = stringResource(R.string.daily_streak_short, daily.streak),
+                        style = MaterialTheme.typography.labelSmall,
+                    )
+                }
+            }
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun DifficultySheet(
@@ -223,9 +310,11 @@ private fun HomeContentPreview() {
         HomeContent(
             loading = false,
             savedGame = null,
+            daily = DailyUiState(LocalDate.of(2026, 11, 6), "H001", Difficulty.HARD, todayRecord = null, streak = 3),
             mode = GameMode.NUMBER,
             onModeChange = {},
             onContinue = {},
+            onDaily = {},
             onNewGame = {},
             onPuzzles = {},
             onStats = {},
