@@ -140,6 +140,8 @@
     <string name="daily_title">오늘의 챌린지</string>
     <string name="daily_subtitle">%1$s · %2$s</string>
     <string name="daily_date_pattern">M월 d일 (E)</string>
+    <!-- 날짜 패턴과 같은 언어로 요일을 표시하기 위한 로캘. 번역 시 함께 바꾼다. -->
+    <string name="daily_date_locale" translatable="false">ko</string>
     <string name="daily_play">도전하기</string>
     <string name="daily_cleared">완료 ✓</string>
     <string name="daily_streak_short">🔥 %1$d일 연속</string>
